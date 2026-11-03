@@ -3,7 +3,10 @@
 Read this at the start of every session.
 
 ## Current state
-**Stage 1, Step 1 — project set up (local).** Not yet on GitHub.
+**Stage 1, Step 1 — done.** Project is live on GitHub (public):
+https://github.com/Nickscottmoody/Signality
+
+Next up: **Step 2 — approve the starter source list.**
 
 ## Done
 - [x] Saved the project brief as `CLAUDE.md`
@@ -14,9 +17,10 @@ Read this at the start of every session.
 - [x] `.env.example` — the template for secrets (real values go in `.env`, never committed)
 - [x] Python virtual environment `.venv` with Stage 1 packages installed
 - [x] Tested all 11 proposed feeds: 10 live, Anthropic has no public RSS (swapped for Simon Willison's blog)
+- [x] Installed GitHub CLI (`gh` 2.103.3, checksum verified against GitHub's published value)
+- [x] Logged in to GitHub as Nickscottmoody; created public repo and pushed first commit
 
 ## Next
-- [ ] Step 1b: GitHub account + login, then create the repo and first commit (**needs Nicholas**)
 - [ ] Step 2: approve the starter source list in `config.yaml` (**needs Nicholas**)
 - [ ] Step 3: build the fetcher — read feeds, remove duplicates, store in SQLite
 - [ ] Step 4: create the Telegram bot, send a test message (**needs Nicholas for @BotFather**)
@@ -29,4 +33,5 @@ Read this at the start of every session.
 - **VentureBeat** returns "too many requests" unless we send a browser-style User-Agent.
   Set in `config.yaml` under `polling.user_agent`.
 - **Anthropic** publishes no RSS feed. Revisit in Stage 3 when search/corroboration is added.
-- `gh` (the GitHub command-line tool) is not installed on this Mac yet.
+- Publishing actions (creating public repos, changing visibility) must be run by Nicholas;
+  Claude's permission settings block them. Regular `git push` to the existing repo is fine.
