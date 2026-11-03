@@ -93,6 +93,9 @@ message type, and the Haiku vs. Sonnet comparison.**
   working, so this is just the current format.
 - **Telegram sender uses `requests`** (simple, synchronous). Two-way commands (/settings, /profile, …)
   will need `python-telegram-bot`, already in requirements.txt.
+- **Nicholas may change `polling.interval_minutes` to 30 or 60 later** (to save data on a phone
+  hotspot: ~0.7 MB per round ≈ 2 GB/month at 15 min). Never assume 15 minutes anywhere in code —
+  always read the interval from config (e.g., alert timing, "breaking" windows, digest windows).
 - **No checks while the Mac sleeps** (lid closed). The agent resumes on wake. Moving to a cloud
   server later (task #13) removes this gap.
 - **Installing/starting the background service is blocked for Claude** by permission settings —
