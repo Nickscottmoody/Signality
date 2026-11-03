@@ -49,62 +49,157 @@ digest:
   send_hour: 8                # hour of day (24-hour clock) to send the digest
   timezone: America/New_York  # which clock to use for the digest hour
 
-# --- News sources (RSS feeds). lean = political lean for the bias audit. ---
-# Types: "primary" = the company or agency itself; "outlet" = a news organization;
-#        "research" = papers. Primary sources outrank outlets for validity labels.
+# --- AI keyword filter (free, runs in code before any paid AI step) ---
+# Sources marked ai_filter: true cover more than AI, so their stories must mention
+# at least one of these words in the headline or preview to be kept.
+ai_filter_keywords:
+  - "AI"                      # matched as a whole word, so "said" or "paid" don't count
+  - "A.I."
+  - artificial intelligence
+  - machine learning
+  - large language model
+  - LLM
+  - chatbot
+  - generative
+  - ChatGPT
+  - OpenAI
+  - Anthropic
+  - Claude
+  - Gemini
+  - DeepMind
+  - Copilot
+  - Nvidia
+  - data center
+  - neural
+
+# --- News sources (RSS feeds) ---
+# type:       primary = the organization the news is about (earns ✅ Confirmed)
+#             news = professional newsroom; specialist = AI-focused outlet
+# lean:       political lean for the bias audit. PLACEHOLDER estimates for now;
+#             replaced with ratings from a public bias-rating site in Stage 2b.
+# paywalled:  true = we only get headline + preview, so summaries are marked "partial"
+# ai_filter:  true = feed covers more than AI, so apply ai_filter_keywords first
+# via:        google_news = outlet has no public feed; we use a Google News search
+#             limited to its site, and must follow Google's link to the real article
 sources:
+  # Primary sources
   - id: openai
     name: OpenAI Blog
     url: https://openai.com/news/rss.xml
     type: primary
     lean: n/a
-  - id: simonwillison
-    name: Simon Willison's Blog (independent AI analysis)
-    url: https://simonwillison.net/atom/everything/
-    type: outlet
-    lean: n/a
+    paywalled: false
+    ai_filter: false
   - id: deepmind
     name: Google DeepMind Blog
     url: https://deepmind.google/blog/rss.xml
     type: primary
     lean: n/a
+    paywalled: false
+    ai_filter: false
+  - id: google_ai
+    name: Google AI Blog
+    url: https://blog.google/technology/ai/rss/
+    type: primary
+    lean: n/a
+    paywalled: false
+    ai_filter: false
+  - id: nvidia
+    name: NVIDIA Blog
+    url: https://blogs.nvidia.com/feed/
+    type: primary
+    lean: n/a
+    paywalled: false
+    ai_filter: false
   - id: huggingface
     name: Hugging Face Blog
     url: https://huggingface.co/blog/feed.xml
     type: primary
     lean: n/a
-  - id: arxiv_ai
-    name: arXiv cs.AI (research papers)
-    url: http://export.arxiv.org/rss/cs.AI
-    type: research
-    lean: n/a
+    paywalled: false
+    ai_filter: false
   - id: federal_register_ai
-    name: Federal Register — AI documents
+    name: Federal Register (AI documents)
     url: https://www.federalregister.gov/api/v1/documents.rss?conditions%5Bterm%5D=artificial+intelligence
     type: primary
+    lean: n/a
+    paywalled: false
+    ai_filter: false
+
+  # Top-tier news
+  - id: reuters
+    name: Reuters
+    url: https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=site:reuters.com+(intitle:AI+OR+intitle:%22artificial+intelligence%22)+when:7d
+    type: news
     lean: center
+    paywalled: false
+    ai_filter: false
+    via: google_news
+  - id: ap
+    name: Associated Press
+    url: https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=site:apnews.com+(intitle:AI+OR+intitle:%22artificial+intelligence%22)+when:7d
+    type: news
+    lean: lean-left
+    paywalled: false
+    ai_filter: false
+    via: google_news
+  - id: wsj
+    name: Wall Street Journal (Tech)
+    url: https://feeds.content.dowjones.io/public/rss/RSSWSJD
+    type: news
+    lean: center
+    paywalled: true
+    ai_filter: true
+  - id: bloomberg
+    name: Bloomberg Technology
+    url: https://feeds.bloomberg.com/technology/news.rss
+    type: news
+    lean: lean-left
+    paywalled: true
+    ai_filter: true
+  - id: ft_ai
+    name: Financial Times (AI)
+    url: https://www.ft.com/artificial-intelligence?format=rss
+    type: news
+    lean: center
+    paywalled: true
+    ai_filter: false
+
+  # AI specialists
+  - id: the_information
+    name: The Information
+    url: https://www.theinformation.com/feed
+    type: specialist
+    lean: unrated
+    paywalled: true
+    ai_filter: true
+  - id: mit_tech_review
+    name: MIT Technology Review (AI)
+    url: https://www.technologyreview.com/topic/artificial-intelligence/feed
+    type: specialist
+    lean: unrated
+    paywalled: false
+    ai_filter: false
+  - id: arstechnica_ai
+    name: Ars Technica (AI)
+    url: https://arstechnica.com/ai/feed/
+    type: specialist
+    lean: unrated
+    paywalled: false
+    ai_filter: false
   - id: techcrunch_ai
     name: TechCrunch AI
     url: https://techcrunch.com/category/artificial-intelligence/feed/
-    type: outlet
-    lean: center-left
-  - id: verge_ai
-    name: The Verge AI
-    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
-    type: outlet
-    lean: center-left
-  - id: venturebeat_ai
-    name: VentureBeat AI
-    url: https://venturebeat.com/category/ai/feed/
-    type: outlet
-    lean: center
-  - id: arstechnica
-    name: Ars Technica
-    url: https://feeds.arstechnica.com/arstechnica/technology-lab
-    type: outlet
-    lean: center-left
-  - id: mit_tech_review
-    name: MIT Technology Review
-    url: https://www.technologyreview.com/topic/artificial-intelligence/feed
-    type: outlet
-    lean: center
+    type: specialist
+    lean: unrated
+    paywalled: false
+    ai_filter: false
+
+  # Viewpoint balance (policy)
+  - id: reason
+    name: Reason (Technology)
+    url: https://reason.com/category/technology/feed/
+    type: news
+    lean: lean-right
+    paywalled: false
+    ai_filter: true

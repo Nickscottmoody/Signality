@@ -27,10 +27,10 @@ Most news tools summarize. Signality keeps a record.
 ## How it works
 
 ```
-   RSS feeds (10)
+   16 news sources
          │  every 15 minutes
          ▼
-   ┌───────────┐   duplicates removed
+   ┌───────────┐   non-AI stories + duplicates removed (free, no AI)
    │  Fetcher  │──────────────────────────┐
    └───────────┘                          ▼
                                    ┌─────────────┐
@@ -54,6 +54,22 @@ Most news tools summarize. Signality keeps a record.
                                          ▼
                                   Telegram  ·  Siggy
 ```
+
+## Sources
+
+Sixteen feeds, chosen for credibility and freshness and tested before use. Reputation
+is only the starting point: Signality grades every source by how its claims hold up.
+
+| Kind | Sources |
+|---|---|
+| **Primary** (what the organization itself said) | OpenAI · Google DeepMind · Google AI · NVIDIA · Hugging Face · Federal Register |
+| **Top-tier news** (fact-checking + correction policies) | Reuters · AP · Wall Street Journal · Bloomberg · Financial Times |
+| **AI specialists** | The Information · MIT Technology Review · Ars Technica · TechCrunch |
+| **Viewpoint balance** (policy) | Reason |
+
+Paywalled sources contribute their headline and preview, and those summaries are marked
+*partial*. Broad feeds pass through a free keyword filter so only AI stories reach the
+paid AI steps.
 
 ## Importance score
 
