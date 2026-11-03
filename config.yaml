@@ -52,6 +52,13 @@ models:
   high_stakes: claude-sonnet-5-5  # careful work: alert checks, claim resolution, impact notes, chat
   deep: claude-opus-5-5       # NOT used by default; only after a side-by-side test proves it's worth it
 
+# --- Siggy, the mascot: which picture goes with which kind of message ---
+siggy:
+  images:
+    normal: assets/siggy-logo.png       # yellow logo: normal messages
+    alert: assets/siggy-alert.png       # red alert: every 🚨 alert
+    thinking: assets/siggy-thinking.png # teal "SCANNING": while answering your questions
+
 # --- Spending guardrail ---
 budget:
   monthly_usd_cap: 10         # target ceiling for AI costs per month

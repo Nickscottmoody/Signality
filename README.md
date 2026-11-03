@@ -130,6 +130,12 @@ Fetch the news once (creates `data/signality.db` on first run):
 ./.venv/bin/python -m signality.fetcher
 ```
 
+Send a test message to your Telegram (needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_USER_ID` in `.env`):
+
+```bash
+./.venv/bin/python -m signality.telegram
+```
+
 Run the tests:
 
 ```bash

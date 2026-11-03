@@ -6,10 +6,10 @@ Read this at the start of every session.
 **Stage 1, Step 1 — done.** Project is live on GitHub (public):
 https://github.com/Nickscottmoody/Signality
 
-**Stage 1, Step 3 — done.** The fetcher reads all 16 feeds, filters, removes duplicates,
-and stores stories in `data/signality.db`. Run it with `./.venv/bin/python -m signality.fetcher`.
+**Stage 1, Step 4 — done.** Telegram bot @Signalitynewsbot sends Siggy's messages to Nicholas.
+Test message (Siggy logo + live counts from the database) sent successfully.
 
-Next up: **Step 4 — create the Telegram bot and send a test message** (needs Nicholas for @BotFather).
+Next up: **Step 5 — run the fetcher automatically every 15 minutes.**
 
 ## Done
 - [x] Saved the project brief as `CLAUDE.md`
@@ -31,9 +31,14 @@ Next up: **Step 4 — create the Telegram bot and send a test message** (needs N
 - [x] Duplicate helpers (`signality/dedup.py`) + 7 passing tests (`tests/test_dedup.py`)
 - [x] Fetcher (`signality/fetcher.py`). First run: 16/16 sources ok, 345 read, 124 too old,
       26 not AI, 195 saved (193 stories, 2 grouped). Second run: 195 duplicates removed, 0 saved.
+- [x] `.env` filled: Telegram token, user ID, Anthropic key. All three verified with free API calls
+      (Telegram getMe; Anthropic model list). Exposed codes from an earlier chat were revoked/replaced.
+- [x] Telegram sender (`signality/telegram.py`): send_message / send_photo; test message via
+      `./.venv/bin/python -m signality.telegram`. Siggy image paths in `config.yaml` under `siggy.images`.
+- [x] Confirmed Anthropic account has claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5 (the
+      strings in config.yaml).
 
 ## Next
-- [ ] Step 4: create the Telegram bot, send a test message (**needs Nicholas for @BotFather**)
 - [ ] Step 5: run on a 15-minute schedule
 
 ## Open issues
@@ -58,6 +63,10 @@ Next up: **Step 4 — create the Telegram bot and send a test message** (needs N
 - **Attribution chains:** Bloomberg ran "Nvidia tells clients to trim China business, FT says" —
   Bloomberg repeating FT, not independent confirmation. Stage 2b must detect "X says/reports" so
   these count as one source.
+- **Anthropic key format** starts with `sk-ant-usr` rather than the older `sk-ant-api`; verified
+  working, so this is just the current format.
+- **Telegram sender uses `requests`** (simple, synchronous). Two-way commands (/settings, /profile, …)
+  will need `python-telegram-bot`, already in requirements.txt.
 - **Google News links** for Reuters/AP still point to news.google.com, not the real article.
   Resolve them in Stage 2a when we need article text.
 - Publishing actions (creating public repos, changing visibility) must be run by Nicholas;
