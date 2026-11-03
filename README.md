@@ -55,6 +55,17 @@ Most news tools summarize. Signality keeps a record.
                                   Telegram  ·  Siggy
 ```
 
+## Duplicate handling
+
+Signality separates two kinds of duplicates, because they mean different things:
+
+- **Exact repeats** (the same article seen again on the next check) are skipped.
+- **Same event, different outlet** is *kept and grouped* under one story. Independent
+  coverage is evidence: it's how a claim moves from 🟡 Reported to 🟢 Likely.
+
+Stage 1 groups near-identical headlines for free. Stage 2a adds Claude Haiku to catch
+the same event written in very different words.
+
 ## Sources
 
 Sixteen feeds, chosen for credibility and freshness and tested before use. Reputation
@@ -111,6 +122,18 @@ cd Signality
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 cp .env.example .env     # then fill in your own keys
+```
+
+Fetch the news once (creates `data/signality.db` on first run):
+
+```bash
+./.venv/bin/python -m signality.fetcher
+```
+
+Run the tests:
+
+```bash
+./.venv/bin/python -m pytest -q
 ```
 
 Secrets go in `.env`, which is listed in `.gitignore` and never committed.

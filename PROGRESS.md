@@ -6,9 +6,10 @@ Read this at the start of every session.
 **Stage 1, Step 1 — done.** Project is live on GitHub (public):
 https://github.com/Nickscottmoody/Signality
 
-**Stage 1, Step 2 — done.** 16 sources approved and in `config.yaml`.
+**Stage 1, Step 3 — done.** The fetcher reads all 16 feeds, filters, removes duplicates,
+and stores stories in `data/signality.db`. Run it with `./.venv/bin/python -m signality.fetcher`.
 
-Next up: **Step 3 — build the fetcher** (read feeds, filter, remove duplicates, store in SQLite).
+Next up: **Step 4 — create the Telegram bot and send a test message** (needs Nicholas for @BotFather).
 
 ## Done
 - [x] Saved the project brief as `CLAUDE.md`
@@ -25,9 +26,13 @@ Next up: **Step 3 — build the fetcher** (read feeds, filter, remove duplicates
       viewpoint balance). Tested 30 candidates for freshness and AI focus; all 16 chosen are live.
 - [x] Added `ai_filter_keywords` to config: free keyword filter for broad feeds (WSJ, Bloomberg,
       The Information, Reason) before any paid AI step
+- [x] Database (`signality/db.py`): sources, stories, articles, fetch_runs; numbered migrations so
+      later stages add tables without rebuilding. Removed sources are marked inactive, not deleted.
+- [x] Duplicate helpers (`signality/dedup.py`) + 7 passing tests (`tests/test_dedup.py`)
+- [x] Fetcher (`signality/fetcher.py`). First run: 16/16 sources ok, 345 read, 124 too old,
+      26 not AI, 195 saved (193 stories, 2 grouped). Second run: 195 duplicates removed, 0 saved.
 
 ## Next
-- [ ] Step 3: build the fetcher — read feeds, remove duplicates, store in SQLite
 - [ ] Step 4: create the Telegram bot, send a test message (**needs Nicholas for @BotFather**)
 - [ ] Step 5: run on a 15-minute schedule
 
@@ -45,6 +50,15 @@ Next up: **Step 3 — build the fetcher** (read feeds, filter, remove duplicates
 - **Paywalled** (WSJ, Bloomberg, FT, The Information): headline + preview only → mark "partial".
 - **Political lean values in config.yaml are placeholders.** Replace with ratings from a public
   bias-rating site (e.g., AllSides) in Stage 2b.
-- **Reason** posts tech stories only every few days, so expect few stories from it.
+- **Reason** posts AI stories only every week or two (first run: its 5 AI stories were 14-27 days
+  old, past the 7-day cutoff, so 0 saved). Mostly opinion pieces → tag "opinion" in Stage 2b.
+- **Free headline matching misses reworded duplicates.** Example: "Gemini 4 Carbon" from DeepMind vs.
+  Ars Technica (similarity 0.38, threshold 0.6). Haiku duplicate detection in Stage 2a covers this.
+  Kept threshold high on purpose: wrongly merging two stories is worse than missing a group.
+- **Attribution chains:** Bloomberg ran "Nvidia tells clients to trim China business, FT says" —
+  Bloomberg repeating FT, not independent confirmation. Stage 2b must detect "X says/reports" so
+  these count as one source.
+- **Google News links** for Reuters/AP still point to news.google.com, not the real article.
+  Resolve them in Stage 2a when we need article text.
 - Publishing actions (creating public repos, changing visibility) must be run by Nicholas;
   Claude's permission settings block them. Regular `git push` to the existing repo is fine.

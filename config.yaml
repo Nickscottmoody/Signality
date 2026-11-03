@@ -9,6 +9,19 @@ polling:
   max_articles_per_feed: 25   # most stories to read from one feed per check (keeps it fast)
   article_char_cap: 6000      # longest piece of article text we send to the AI (controls cost)
   user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Signality/0.1"  # how we identify ourselves to websites (some block unknown visitors)
+  request_timeout_seconds: 20 # give up on a feed that hasn't answered after this many seconds
+  max_article_age_days: 7     # ignore stories published longer ago than this
+  snippet_char_cap: 1000      # longest preview text we store per story
+
+# --- Duplicate detection (free; smarter AI matching is added in Stage 2a) ---
+dedup:
+  title_similarity: 0.6       # 0-1: how alike two headlines must be to count as the same story
+  window_hours: 72            # only compare against stories seen in the last this-many hours
+  min_title_words: 3          # headlines shorter than this are never auto-grouped (too risky)
+
+# --- Where data is saved on this computer (the data/ folder is never uploaded) ---
+storage:
+  db_path: data/signality.db  # the SQLite database file
 
 # --- Importance score (0-100). The AI rates 4 factors 1-5; code does the math. ---
 importance:

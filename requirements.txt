@@ -3,3 +3,4 @@ python-telegram-bot==21.9 # talks to Telegram
 PyYAML==6.0.2             # reads config.yaml
 python-dotenv==1.0.1      # reads secrets from .env
 requests==2.32.3          # fetches web pages (with its own HTTPS certificates)
+pytest==8.3.4             # runs the automated tests in tests/
