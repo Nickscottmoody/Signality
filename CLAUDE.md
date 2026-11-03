@@ -136,6 +136,12 @@ Privacy:
 Later phases will add: source reputation scores earned from resolved claims, Siggy's public accuracy score, visual trend charts, a weekly deep-analysis trend report (a possible good use for Opus, since it's low volume and high value), tracked predictions (Siggy's and users'), a prediction game with a leaderboard, and eventually opening Signality to college students as an all-in-one guide to how AI is changing their paths.
 - Design the database so these can be added without rebuilding: keep claim history, resolution outcomes, source IDs, and timestamps from day one.
 - Keep user-specific data separate from shared news data, so multiple users can be supported later.
+- Platform-ready: I may later move Signality to a platform beyond my personal Telegram bot (its own app or website, other chat apps, or a hosted multi-user service). We'll decide that after it's complete, but keep it possible:
+  - Telegram is only a delivery channel. Core logic (fetching, scoring, claims, profiles) must never depend on Telegram. Build messages as platform-neutral data first, then render them in a separate Telegram module.
+  - Identify users by platform + account ID, not by a Telegram-only field.
+  - config.yaml holds defaults; each user's own settings (thresholds, muted topics, profile) live in the database per user.
+  - Keep database code standard SQL so moving from SQLite to a larger database stays a contained change.
+  - Keep hosting-specific code (like the Mac launchd service) as a thin wrapper outside the core.
 
 ## Portfolio requirements
 - Set up a GitHub repository from the start. Store all keys and tokens in a .env file and add it to .gitignore before the first commit.

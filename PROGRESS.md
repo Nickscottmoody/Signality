@@ -6,10 +6,27 @@ Read this at the start of every session.
 **Stage 1, Step 1 — done.** Project is live on GitHub (public):
 https://github.com/Nickscottmoody/Signality
 
-**Stage 1, Step 4 — done.** Telegram bot @Signalitynewsbot sends Siggy's messages to Nicholas.
-Test message (Siggy logo + live counts from the database) sent successfully.
+**Stage 1 — complete.** Signality runs in the background on Nicholas's Mac (launchd service
+`com.signality.agent`), checks 16 sources every 15 minutes, filters, de-duplicates, and stores
+stories in `data/signality.db`. Telegram bot @Signalitynewsbot delivers messages.
 
-Next up: **Step 5 — run the fetcher automatically every 15 minutes.**
+Next up: **Stage 2a — summaries, importance + validity scoring, alert tiers, Siggy's images per
+message type, and the Haiku vs. Sonnet comparison.**
+
+## How to run / operate
+| Do this | Command (from the project folder) |
+|---|---|
+| Check the news once | `./.venv/bin/python -m signality.fetcher` |
+| Send a Telegram test message | `./.venv/bin/python -m signality.telegram` |
+| Run the agent in the foreground | `./.venv/bin/python -m signality.agent` |
+| Start / **restart** background service | `./scripts/install_mac_service.sh` (Nicholas runs this) |
+| Stop background service | `./scripts/uninstall_mac_service.sh` |
+| See what the agent did | `tail -20 data/signality.log` |
+| Service startup errors | `~/Library/Logs/signality-launchd.log` |
+| Run tests | `./.venv/bin/python -m pytest -q` |
+
+**After changing any code, restart the service** — a running program keeps using the old code.
+`config.yaml` changes do NOT need a restart; the agent rereads it every round.
 
 ## Done
 - [x] Saved the project brief as `CLAUDE.md`
@@ -37,9 +54,18 @@ Next up: **Step 5 — run the fetcher automatically every 15 minutes.**
       `./.venv/bin/python -m signality.telegram`. Siggy image paths in `config.yaml` under `siggy.images`.
 - [x] Confirmed Anthropic account has claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5 (the
       strings in config.yaml).
+- [x] Agent loop (`signality/agent.py`): one fetch round every `polling.interval_minutes`, rereads
+      config each round, a crashed round is logged and retried next round, never stops the loop.
+      Logs to `data/signality.log` (rotating, ~3 MB max).
+- [x] Background service: `scripts/install_mac_service.sh` / `uninstall_mac_service.sh` (launchd,
+      starts at login, restarts on crash). Installed by Nicholas; verified running with no
+      Desktop-permission errors and rounds completing on schedule.
 
 ## Next
-- [ ] Step 5: run on a 15-minute schedule
+- [ ] Stage 2a: add `anthropic` package; summaries (Haiku), 4-factor importance ratings, validity
+      labels, alert tiers (🚨/🔔/📰/stored), Siggy image per message type, alert cap, morning digest
+- [ ] Stage 2a: resolve Google News links; Haiku duplicate detection for reworded headlines
+- [ ] Stage 2a: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
 
 ## Open issues
 - **Python HTTPS certificates:** this Mac's Python 3.12 cannot verify certificates on its own, so
@@ -67,6 +93,10 @@ Next up: **Step 5 — run the fetcher automatically every 15 minutes.**
   working, so this is just the current format.
 - **Telegram sender uses `requests`** (simple, synchronous). Two-way commands (/settings, /profile, …)
   will need `python-telegram-bot`, already in requirements.txt.
+- **No checks while the Mac sleeps** (lid closed). The agent resumes on wake. Moving to a cloud
+  server later (task #13) removes this gap.
+- **Installing/starting the background service is blocked for Claude** by permission settings —
+  Nicholas runs `scripts/install_mac_service.sh` (also needed to restart after code changes).
 - **Google News links** for Reuters/AP still point to news.google.com, not the real article.
   Resolve them in Stage 2a when we need article text.
 - Publishing actions (creating public repos, changing visibility) must be run by Nicholas;

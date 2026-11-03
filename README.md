@@ -130,6 +130,19 @@ Fetch the news once (creates `data/signality.db` on first run):
 ./.venv/bin/python -m signality.fetcher
 ```
 
+Run the always-on agent (checks every 15 minutes; Ctrl+C to stop):
+
+```bash
+./.venv/bin/python -m signality.agent
+```
+
+Or, on a Mac, install it as a background service that starts at login and restarts if it
+crashes (undo with `scripts/uninstall_mac_service.sh`):
+
+```bash
+./scripts/install_mac_service.sh
+```
+
 Send a test message to your Telegram (needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_USER_ID` in `.env`):
 
 ```bash
@@ -152,7 +165,7 @@ Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for 
 
 ## Status
 
-Stage 1 of 4 — in progress. See [PROGRESS.md](PROGRESS.md).
+Stage 1 complete ✅ (fetching, filtering, de-duplication, storage, Telegram, always-on). Stage 2a next. See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |
 |---|---|

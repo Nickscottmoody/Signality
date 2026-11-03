@@ -92,7 +92,7 @@ def connect(db_path):
     """Open the database (creating it if needed) and bring it up to date."""
     path = ROOT / db_path
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, timeout=30)  # wait if another run is writing
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     migrate(conn)
