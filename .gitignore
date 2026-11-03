@@ -1,0 +1,17 @@
+# Secrets — never upload these
+.env
+
+# Personal data — stays on this machine only
+data/
+*.db
+*.sqlite
+*.sqlite3
+profile.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
