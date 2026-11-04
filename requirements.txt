@@ -4,4 +4,5 @@ PyYAML==6.0.2             # reads config.yaml
 python-dotenv==1.0.1      # reads secrets from .env
 requests==2.32.3          # fetches web pages (with its own HTTPS certificates)
 anthropic==1.17.0         # official library for calling Claude
+trafilatura==2.0.0        # pulls the main article text out of a web page
 pytest==8.3.4             # runs the automated tests in tests/

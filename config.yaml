@@ -37,6 +37,14 @@ importance:
     digest: 25                # 25-49: morning digest; below 25 is stored only
   alert_cap_per_day: 3        # most loud alerts allowed in one day
 
+# --- Triage: Haiku reads each new story, summarizes it, and rates it ---
+triage:
+  enabled: false              # OFF until Nicholas approves the cost; then the agent triages every round
+  max_per_round: 40           # most stories to triage in one round (caps cost per round)
+  max_story_age_hours: 48     # never spend money on stories first seen longer ago than this
+  fetch_full_text: true       # read the full article page when it's free to read (better summaries)
+  dedup_candidates: 8         # how many similar recent headlines Haiku checks for "same event"
+
 # --- Topics Signality watches, and how much to favor each ---
 topics:
   model_releases: 1.0         # new AI models and major updates
@@ -157,7 +165,7 @@ sources:
     type: primary
     lean: n/a
     paywalled: false
-    ai_filter: false
+    ai_filter: true   # search matches any passing mention of AI, so filter
 
   # Top-tier news
   - id: reuters

@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import fetcher
+from . import ai, db, fetcher, triage
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -48,6 +48,25 @@ def one_round():
     except Exception:
         # One bad round (no internet, a broken feed) must never stop the agent.
         log.exception("fetch round crashed; will try again next round")
+
+    cfg = load_config()
+    if not cfg["triage"]["enabled"]:
+        return
+    try:
+        conn = db.connect(cfg["storage"]["db_path"])
+        t = triage.run(conn, cfg)
+        budget = ai.budget_status(conn, cfg)
+        conn.close()
+        log.info(
+            "triage: %d scored, %d merged as duplicates, %d failed, %d too old | $%.4f this round | "
+            "$%.2f of $%s this month",
+            t["triaged"], t["merged"], t["failed"], t["too_old"], t["cost_usd"],
+            budget["spent"], budget["cap"],
+        )
+    except ai.BudgetExceeded as e:
+        log.warning("triage skipped: %s", e)
+    except Exception:
+        log.exception("triage round crashed; will try again next round")
 
 
 def main():

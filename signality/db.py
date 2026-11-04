@@ -106,6 +106,49 @@ MIGRATIONS = [
         updated_at  TEXT NOT NULL
     );
     """,
+    # 3 - Stage 2a: triage results. One row per story per model, so the same
+    #     story can be scored by Haiku and Sonnet side by side ('comparison').
+    """
+    ALTER TABLE stories ADD COLUMN status TEXT NOT NULL DEFAULT 'new';
+        -- new | triaged | merged | failed | too_old
+    ALTER TABLE stories ADD COLUMN merged_into INTEGER REFERENCES stories(id);
+
+    CREATE TABLE story_triage (
+        id              INTEGER PRIMARY KEY,
+        story_id        INTEGER NOT NULL REFERENCES stories(id),
+        article_id      INTEGER NOT NULL REFERENCES articles(id),  -- the article that was read
+        purpose         TEXT NOT NULL DEFAULT 'live',              -- live | comparison
+        model           TEXT NOT NULL,
+        created_at      TEXT NOT NULL,
+        text_source     TEXT NOT NULL,      -- full = whole article; snippet = preview only ("partial")
+        headline        TEXT NOT NULL,
+        summary         TEXT NOT NULL,
+        why_it_matters  TEXT NOT NULL,
+        topics          TEXT NOT NULL,      -- JSON list, e.g. ["jobs", "policy"]
+        content_type    TEXT NOT NULL,      -- news | opinion | analysis | press_release | research_paper
+        sourcing        TEXT NOT NULL,      -- what the article's claims rest on (see triage.py)
+        attributed_to   TEXT,               -- outlet it repeats, e.g. "Financial Times"
+        self_reported   INTEGER NOT NULL,   -- 1 = key claims are a company's own unverified claims
+        impact          INTEGER NOT NULL,
+        impact_reason   TEXT NOT NULL,
+        breadth         INTEGER NOT NULL,
+        breadth_reason  TEXT NOT NULL,
+        urgency         INTEGER NOT NULL,
+        urgency_reason  TEXT NOT NULL,
+        novelty         INTEGER NOT NULL,
+        novelty_reason  TEXT NOT NULL,
+        base_score      REAL NOT NULL,      -- 0-100 from the four factors alone
+        topic_multiplier REAL NOT NULL,     -- favored topics (jobs, finance) get a boost
+        importance      INTEGER NOT NULL,   -- final 0-100 score
+        cost_usd        REAL NOT NULL,
+        UNIQUE (story_id, model, purpose)
+    );
+    CREATE INDEX idx_stories_status ON stories(status);
+    """,
+    # 4 - Stage 2a: the model's "is this actually about AI?" check
+    """
+    ALTER TABLE story_triage ADD COLUMN ai_related INTEGER NOT NULL DEFAULT 1;
+    """,
 ]
 
 

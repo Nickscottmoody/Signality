@@ -13,7 +13,11 @@ stories in `data/signality.db`. Telegram bot @Signalitynewsbot delivers messages
 **Stage 2a, Step 1 — done.** Claude connected through `signality/ai.py` with a cost meter
 (`ai_calls` table) and budget guard (warns at 80%, hard stop at $10/month).
 
-Next up: **Stage 2a, Step 2 — Haiku reads and scores each story.**
+**Stage 2a, Step 2 — done.** Haiku triages each new story (summary, topics, sourcing, 4 factor
+ratings with reasons, same-event check); code computes importance. Built but **switched off**
+(`triage.enabled: false`) until the cost is approved in step 6.
+
+Next up: **Stage 2a, Step 3 — validity labels (rules in code + Sonnet check on alerts).**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -68,7 +72,13 @@ Next up: **Stage 2a, Step 2 — Haiku reads and scores each story.**
       revisit). `ai.ask_json()`: model + effort per role from config, JSON-schema replies, cached
       system prompt, every call priced and logged in `ai_calls`. Budget guard via `budget_status()`.
       Prices + effort in config.yaml. First real call (Haiku): $0.000046. 10 tests passing.
-- [ ] Stage 2a: summaries (Haiku), 4-factor importance ratings, validity
+- [x] Stage 2a step 2: `triage.py` (one Haiku call per story, cached instructions, JSON schema),
+      `scoring.py` (weights → 0-100, topic multiplier, tiers), `article_text.py` (full text via
+      trafilatura when free; else preview → "partial"). Migrations 3-4: story status, story_triage
+      table (per model + purpose, so comparisons fit), ai_related flag. Haiku same-event check merged
+      The Information + AP "Google/schools AI" (reworded) correctly. 15 tests passing.
+      Sample of 22: avg $0.00034/story → ~$1.00-1.50/month at 100-150 stories/day.
+- [ ] Stage 2a: validity
       labels, alert tiers (🚨/🔔/📰/stored), Siggy image per message type, alert cap, morning digest
 - [ ] Stage 2a: resolve Google News links; Haiku duplicate detection for reworded headlines
 - [ ] Stage 2a: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
@@ -99,6 +109,13 @@ Next up: **Stage 2a, Step 2 — Haiku reads and scores each story.**
   working, so this is just the current format.
 - **Telegram sender uses `requests`** (simple, synchronous). Two-way commands (/settings, /profile, …)
   will need `python-telegram-bot`, already in requirements.txt.
+- **⚠️ Topic boost (×1.3 for jobs/finance) floods the 🔔 tier.** In a 22-story sample, 32% landed in
+  🔔 silent with the boost vs. 5% without → ~30-50 silent messages/day vs. ~5-7. Decide in step 5
+  (task #8): lower the multiplier, use a flat point bonus, or raise the silent threshold.
+- **"Not AI" check:** Federal Register now uses the keyword filter (its search matches passing
+  mentions). Haiku also flags `ai_related`; false → importance 0, stored only. Rule: AI must be
+  central/significant, incl. AI's effect on markets/jobs/policy. Borderline: "Democrats' win rattles
+  trades from AI stocks to crypto" judged not AI from the preview — review in step 5.
 - **Nicholas may change `polling.interval_minutes` to 30 or 60 later** (to save data on a phone
   hotspot: ~0.7 MB per round ≈ 2 GB/month at 15 min). Never assume 15 minutes anywhere in code —
   always read the interval from config (e.g., alert timing, "breaking" windows, digest windows).
