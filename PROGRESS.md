@@ -78,10 +78,13 @@ Next up: **Stage 2a, Step 3 — validity labels (rules in code + Sonnet check on
       table (per model + purpose, so comparisons fit), ai_related flag. Haiku same-event check merged
       The Information + AP "Google/schools AI" (reworded) correctly. 15 tests passing.
       Sample of 22: avg $0.00034/story → ~$1.00-1.50/month at 100-150 stories/day.
-- [ ] Stage 2a: validity
-      labels, alert tiers (🚨/🔔/📰/stored), Siggy image per message type, alert cap, morning digest
-- [ ] Stage 2a: resolve Google News links; Haiku duplicate detection for reworded headlines
-- [ ] Stage 2a: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
+- [ ] Stage 2a step 3: validity labels (rules in code from sourcing + independent outlets; Sonnet
+      check before any 🚨)
+- [ ] Stage 2a step 4: alert tiers (🚨/🔔/📰/stored), platform-neutral messages, Siggy image per
+      message type, alert cap, morning digest, budget warning message
+- [ ] Later: resolve Google News links (Reuters/AP are headline-only → "partial" for now)
+- [ ] Stage 2a step 5: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
+- [ ] Stage 2a step 6: switch on triage, restart service, watch first day's costs
 
 ## Open issues
 - **Python HTTPS certificates:** this Mac's Python 3.12 cannot verify certificates on its own, so
