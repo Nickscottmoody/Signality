@@ -80,6 +80,32 @@ MIGRATIONS = [
         errors              TEXT
     );
     """,
+    # 2 - Stage 2a: a record of every Claude call (the cost meter), plus a
+    #     small key/value store for agent state (e.g., "budget warning sent").
+    """
+    CREATE TABLE ai_calls (
+        id                  INTEGER PRIMARY KEY,
+        created_at          TEXT NOT NULL,
+        task                TEXT NOT NULL,      -- e.g. 'triage', 'alert_check'
+        model               TEXT NOT NULL,
+        story_id            INTEGER REFERENCES stories(id),
+        input_tokens        INTEGER NOT NULL DEFAULT 0,
+        output_tokens       INTEGER NOT NULL DEFAULT 0,
+        cache_write_tokens  INTEGER NOT NULL DEFAULT 0,
+        cache_read_tokens   INTEGER NOT NULL DEFAULT 0,
+        cost_usd            REAL NOT NULL DEFAULT 0,
+        ok                  INTEGER NOT NULL,   -- 1 = worked, 0 = failed
+        error               TEXT,
+        request_id          TEXT                -- Anthropic's id, for support questions
+    );
+    CREATE INDEX idx_ai_calls_created ON ai_calls(created_at);
+
+    CREATE TABLE app_state (
+        key         TEXT PRIMARY KEY,
+        value       TEXT,
+        updated_at  TEXT NOT NULL
+    );
+    """,
 ]
 
 
@@ -140,5 +166,21 @@ def sync_sources(conn, sources):
     conn.execute(
         f"UPDATE sources SET active = 0 WHERE id NOT IN ({','.join('?' * len(ids))})",
         ids,
+    )
+    conn.commit()
+
+
+def get_state(conn, key, default=None):
+    """Read one saved value from app_state."""
+    row = conn.execute("SELECT value FROM app_state WHERE key = ?", (key,)).fetchone()
+    return row[0] if row else default
+
+
+def set_state(conn, key, value):
+    """Save one value to app_state (insert or overwrite)."""
+    conn.execute(
+        "INSERT INTO app_state (key, value, updated_at) VALUES (?, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+        (key, value, utcnow()),
     )
     conn.commit()

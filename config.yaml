@@ -52,6 +52,18 @@ models:
   bulk: claude-haiku-5-5      # cheap, high volume: summaries, tags, factor ratings, duplicates
   high_stakes: claude-sonnet-5-5  # careful work: alert checks, claim resolution, impact notes, chat
   deep: claude-opus-5-5       # NOT used by default; only after a side-by-side test proves it's worth it
+  effort:                     # how hard each model thinks: low | medium | high (higher = better but pricier)
+    bulk: low                 # triage is simple and high-volume, so keep it light
+    high_stakes: medium       # alert checks and claim decisions get more care
+    deep: medium              # only used in side-by-side tests for now
+  max_output_tokens: 4000     # hard ceiling on one reply's length (includes the model's thinking)
+  # Price per 1 million tokens, in US dollars (a token is roughly 3/4 of a word).
+  # From Anthropic's published pricing; update here if prices change.
+  # cache_write/cache_read: price for instructions reused across calls (much cheaper to reread).
+  prices_per_million_usd:
+    claude-haiku-5-5:  {input: 0.10, output: 0.50,  cache_write: 0.125, cache_read: 0.01}
+    claude-sonnet-5-5: {input: 2.00, output: 10.00, cache_write: 2.50,  cache_read: 0.20}
+    claude-opus-5-5:   {input: 4.00, output: 20.00, cache_write: 5.00,  cache_read: 0.20}
 
 # --- Siggy, the mascot: which picture goes with which kind of message ---
 siggy:

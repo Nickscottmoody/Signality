@@ -10,8 +10,10 @@ https://github.com/Nickscottmoody/Signality
 `com.signality.agent`), checks 16 sources every 15 minutes, filters, de-duplicates, and stores
 stories in `data/signality.db`. Telegram bot @Signalitynewsbot delivers messages.
 
-Next up: **Stage 2a — summaries, importance + validity scoring, alert tiers, Siggy's images per
-message type, and the Haiku vs. Sonnet comparison.**
+**Stage 2a, Step 1 — done.** Claude connected through `signality/ai.py` with a cost meter
+(`ai_calls` table) and budget guard (warns at 80%, hard stop at $10/month).
+
+Next up: **Stage 2a, Step 2 — Haiku reads and scores each story.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -62,7 +64,11 @@ message type, and the Haiku vs. Sonnet comparison.**
       Desktop-permission errors and rounds completing on schedule.
 
 ## Next
-- [ ] Stage 2a: add `anthropic` package; summaries (Haiku), 4-factor importance ratings, validity
+- [x] Stage 2a step 1: `anthropic==1.17.0` (latest 1.x; 2.x exists but our reference docs cover 1.x —
+      revisit). `ai.ask_json()`: model + effort per role from config, JSON-schema replies, cached
+      system prompt, every call priced and logged in `ai_calls`. Budget guard via `budget_status()`.
+      Prices + effort in config.yaml. First real call (Haiku): $0.000046. 10 tests passing.
+- [ ] Stage 2a: summaries (Haiku), 4-factor importance ratings, validity
       labels, alert tiers (🚨/🔔/📰/stored), Siggy image per message type, alert cap, morning digest
 - [ ] Stage 2a: resolve Google News links; Haiku duplicate detection for reworded headlines
 - [ ] Stage 2a: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
