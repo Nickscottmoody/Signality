@@ -7,6 +7,7 @@ Send a test message from the project folder:
     ./.venv/bin/python -m signality.telegram
 """
 import html
+import json
 import re
 
 import requests
@@ -40,14 +41,19 @@ def _chat_id(chat_id):
     return chat_id
 
 
-def send_message(text, chat_id=None, silent=False):
-    """Send a text message. Text may use simple HTML: <b>, <i>, <a href>."""
+def send_message(text, chat_id=None, silent=False, image_url=None):
+    """Send a text message. Text may use simple HTML: <b>, <i>, <a href>.
+
+    With image_url, Telegram shows that picture above the text, all in ONE message.
+    """
+    preview = ({"url": image_url, "show_above_text": True, "prefer_large_media": True}
+               if image_url else {"is_disabled": True})
     return _call("sendMessage", {
         "chat_id": _chat_id(chat_id),
         "text": text,
         "parse_mode": "HTML",
         "disable_notification": silent,
-        "disable_web_page_preview": True,
+        "link_preview_options": json.dumps(preview),
     })
 
 
@@ -118,57 +124,57 @@ def render_unconfirmed_item(card):
             f"{card.label_text}: {_e(card.label_reason)} · {_links(card.sources, 2)}")
 
 
-def _chunks(blocks, limit=TEXT_LIMIT):
-    """Join blocks with blank lines, splitting into messages that fit Telegram's limit."""
-    out, current = [], ""
-    for block in blocks:
-        candidate = f"{current}\n\n{block}" if current else block
-        if len(candidate) > limit and current:
-            out.append(current)
-            current = block
+def fit_digest(message, limit=TEXT_LIMIT):
+    """The digest as ONE message: drop the lowest-ranked stories until it fits.
+
+    Returns (text, cards included, unconfirmed included).
+    """
+    cards, unconfirmed = list(message.cards), list(message.unconfirmed)
+    while True:
+        dropped = (len(message.cards) - len(cards)) + (len(message.unconfirmed) - len(unconfirmed))
+        blocks = [f"<b>{_e(message.title)}</b>\n{_e(message.text)}"]
+        blocks += [render_digest_item(i, c) for i, c in enumerate(cards, 1)]
+        if unconfirmed:
+            blocks.append("⚠️ <b>Unconfirmed: read with care</b>")
+            blocks += [render_unconfirmed_item(c) for c in unconfirmed]
+        if dropped:
+            blocks.append(f"<i>…plus {dropped} more lower-ranked {'story' if dropped == 1 else 'stories'}, "
+                          "saved and searchable.</i>")
+        text = "\n\n".join(blocks)
+        if visible_length(text) <= limit or not (cards or unconfirmed):
+            return text, cards, unconfirmed
+        if len(cards) > 3 or not unconfirmed:  # trim main list first, keep at least 3
+            cards.pop()
         else:
-            current = candidate
-    if current:
-        out.append(current)
-    return out
+            unconfirmed.pop()
 
 
 def deliver(message, cfg, chat_id=None):
-    """Send a platform-neutral Message to Telegram. Returns the first Telegram message id."""
-    images = cfg["siggy"]["images"]
-    first_id = None
+    """Send a platform-neutral Message to Telegram as ONE notification.
 
-    def remember(result):
-        nonlocal first_id
-        if first_id is None:
-            first_id = result["message_id"]
+    Returns {"message_id": ..., "story_ids": [stories actually included]}.
+    """
+    images, image_urls = cfg["siggy"]["images"], cfg["siggy"].get("image_urls", {})
+
+    def with_image(body, key, silent):
+        """Photo with caption if it fits; otherwise the picture shown above a text message."""
+        if key and visible_length(body) <= CAPTION_LIMIT:
+            return send_photo(images[key], body, chat_id, silent=silent)
+        return send_message(body, chat_id, silent=silent, image_url=image_urls.get(key) if key else None)
 
     if message.kind in ("alert", "silent"):
-        body = render_card(message.cards[0], message.kind, message.note)
-        image = images["alert"] if message.kind == "alert" else (
-            images["normal"] if cfg["delivery"]["image_on_silent"] else None)
-        if image and visible_length(body) <= CAPTION_LIMIT:
-            remember(send_photo(image, body, chat_id, silent=message.silent))
-        else:
-            if image:
-                remember(send_photo(image, TIER_ICON.get(message.kind, ""), chat_id, silent=message.silent))
-            remember(send_message(body, chat_id, silent=message.silent))
-    elif message.kind == "digest":
-        remember(send_photo(images["normal"], f"<b>{_e(message.title)}</b>\n{_e(message.text)}", chat_id, silent=True))
-        blocks = [render_digest_item(i, c) for i, c in enumerate(message.cards, 1)]
-        if message.unconfirmed:
-            blocks.append("⚠️ <b>Unconfirmed: read with care</b>")
-            blocks += [render_unconfirmed_item(c) for c in message.unconfirmed]
-        for chunk in _chunks(blocks):
-            remember(send_message(chunk, chat_id, silent=True))
-    else:  # notice
-        body = f"<b>{_e(message.title)}</b>\n{_e(message.text)}" if message.title else _e(message.text)
-        image = images.get(message.image) if message.image else None
-        if image and visible_length(body) <= CAPTION_LIMIT:
-            remember(send_photo(image, body, chat_id, silent=message.silent))
-        else:
-            remember(send_message(body, chat_id, silent=message.silent))
-    return first_id
+        key = "alert" if message.kind == "alert" else ("normal" if cfg["delivery"]["image_on_silent"] else None)
+        result = with_image(render_card(message.cards[0], message.kind, message.note), key, message.silent)
+        return {"message_id": result["message_id"], "story_ids": [message.cards[0].story_id]}
+
+    if message.kind == "digest":
+        text, cards, unconfirmed = fit_digest(message)
+        result = send_message(text, chat_id, silent=True, image_url=image_urls.get("normal"))
+        return {"message_id": result["message_id"], "story_ids": [c.story_id for c in cards + unconfirmed]}
+
+    body = f"<b>{_e(message.title)}</b>\n{_e(message.text)}" if message.title else _e(message.text)
+    result = with_image(body, message.image, message.silent)
+    return {"message_id": result["message_id"], "story_ids": []}
 
 
 def test_message(cfg):

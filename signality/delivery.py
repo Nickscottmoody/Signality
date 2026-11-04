@@ -39,7 +39,7 @@ def route(importance, label, cfg):
 
 def _send(conn, cfg, message, story_id=None, note=None):
     """Deliver one message and record it. Returns True if sent."""
-    message_id = telegram.deliver(message, cfg)
+    message_id = telegram.deliver(message, cfg)["message_id"]
     conn.execute(
         "INSERT INTO deliveries (story_id, recipient, kind, sent_at, local_date, channel_message_id, note)"
         " VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -142,16 +142,19 @@ def maybe_send_digest(conn, cfg):
     if now.hour < cfg["digest"]["send_hour"] or db.get_state(conn, key):
         return 0
     message = build_digest(conn, cfg)
+    included = []
     if message.cards or message.unconfirmed:
-        telegram.deliver(message, cfg)
-        for card in message.cards + message.unconfirmed:
+        sent = telegram.deliver(message, cfg)
+        included = sent["story_ids"]  # only the stories that fit in the one message
+        for story_id in included:
             conn.execute(
-                "INSERT INTO deliveries (story_id, recipient, kind, sent_at, local_date) VALUES (?, ?, 'digest', ?, ?)",
-                (card.story_id, recipient(), db.utcnow(), now.date().isoformat()),
+                "INSERT INTO deliveries (story_id, recipient, kind, sent_at, local_date, channel_message_id)"
+                " VALUES (?, ?, 'digest', ?, ?, ?)",
+                (story_id, recipient(), db.utcnow(), now.date().isoformat(), str(sent["message_id"])),
             )
         conn.commit()
     db.set_state(conn, key, db.utcnow())
-    return len(message.cards) + len(message.unconfirmed)
+    return len(included)
 
 
 def budget_notices(conn, cfg):

@@ -144,6 +144,11 @@ Next up: **Stage 2a, Step 5 — Haiku vs. Sonnet comparison + tune the topic bon
   server later (task #13) removes this gap.
 - **Installing/starting the background service is blocked for Claude** by permission settings —
   Nicholas runs `scripts/install_mac_service.sh` (also needed to restart after code changes).
+- **One notification per message (Nicholas's request):** alerts/notices use photo + caption when the
+  text fits (≤1024 chars as Telegram counts them); otherwise, and always for the digest, the text is
+  sent as ONE message with Siggy shown above it via a link preview of the public image URL
+  (`siggy.image_urls`, raw.githubusercontent.com — **requires the GitHub repo to stay public**).
+  The digest keeps as many top stories as fit in one message (~12) and ends with "…plus N more".
 - **Siggy image choice:** 🚨 alerts get red Siggy; digest + notices get the yellow logo; 🔔 silent
   messages are text-only by default to keep the chat readable (`delivery.image_on_silent`).
   Brief says "logo for normal messages" — confirm with Nicholas.

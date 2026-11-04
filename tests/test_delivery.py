@@ -36,12 +36,15 @@ def test_card_escapes_html_and_shows_evidence():
     assert body.startswith("🚨")
 
 
-def test_long_digest_is_split_under_telegram_limit():
-    blocks = [telegram.render_digest_item(i, card("x" * 300)) for i in range(40)]
-    chunks = telegram._chunks(blocks)
-    assert len(chunks) > 1 and all(len(c) <= telegram.TEXT_LIMIT for c in chunks)
-
-
 def test_caption_length_ignores_link_addresses_and_tags():
     body = '<b>Hi</b> <a href="https://example.com/very/long/address">link</a>'
     assert telegram.visible_length(body) == len("Hi link")
+
+
+def test_digest_always_fits_in_one_message():
+    from signality.messages import Message
+    cards = [card("x" * 200) for _ in range(30)]
+    message = Message(kind="digest", silent=True, title="Morning digest", text="30 stories.", cards=cards)
+    text, kept, _ = telegram.fit_digest(message)
+    assert telegram.visible_length(text) <= telegram.TEXT_LIMIT
+    assert 3 <= len(kept) < 30 and f"plus {30 - len(kept)} more" in text

@@ -79,6 +79,13 @@ siggy:
     normal: assets/siggy-logo.png       # yellow logo: normal messages
     alert: assets/siggy-alert.png       # red alert: every 🚨 alert
     thinking: assets/siggy-thinking.png # teal "SCANNING": while answering your questions
+  # Public copies of the same pictures. Telegram shows these ABOVE a long text message, so a
+  # message too long for a photo caption still arrives as ONE notification (needs the GitHub repo
+  # to stay public; if a picture can't load, the text still arrives).
+  image_urls:
+    normal: https://raw.githubusercontent.com/Nickscottmoody/Signality/main/assets/siggy-logo.png
+    alert: https://raw.githubusercontent.com/Nickscottmoody/Signality/main/assets/siggy-alert.png
+    thinking: https://raw.githubusercontent.com/Nickscottmoody/Signality/main/assets/siggy-thinking.png
 
 # --- Spending guardrail ---
 budget:
