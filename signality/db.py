@@ -175,6 +175,22 @@ MIGRATIONS = [
         cost_usd        REAL NOT NULL
     );
     """,
+    # 6 - Stage 2a: what was sent to whom. 'recipient' is platform + account
+    #     (e.g. 'telegram:123'), so other platforms and users can be added later.
+    """
+    CREATE TABLE deliveries (
+        id              INTEGER PRIMARY KEY,
+        story_id        INTEGER REFERENCES stories(id),   -- empty for notices
+        recipient       TEXT NOT NULL,
+        kind            TEXT NOT NULL,      -- alert | silent | digest | notice
+        sent_at         TEXT NOT NULL,
+        local_date      TEXT NOT NULL,      -- the recipient's calendar day (for the alert cap)
+        channel_message_id TEXT,            -- the platform's id for the sent message
+        note            TEXT
+    );
+    CREATE UNIQUE INDEX idx_deliveries_once ON deliveries(story_id, recipient) WHERE story_id IS NOT NULL;
+    CREATE INDEX idx_deliveries_day ON deliveries(recipient, local_date, kind);
+    """,
 ]
 
 

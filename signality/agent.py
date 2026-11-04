@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, db, fetcher, triage, validity
+from . import ai, db, delivery, fetcher, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -68,6 +68,18 @@ def one_round():
         log.warning("triage skipped: %s", e)
     except Exception:
         log.exception("triage round crashed; will try again next round")
+
+    if not cfg["delivery"]["enabled"]:
+        return
+    try:
+        conn = db.connect(cfg["storage"]["db_path"])
+        d = delivery.run(conn, cfg)
+        conn.close()
+        if any(d.values()):
+            log.info("delivery: %d alerts, %d silent, %d in digest%s", d["alert"], d["silent"],
+                     d["digest_items"], f", budget notice: {d['budget_notice']}" if d["budget_notice"] else "")
+    except Exception:
+        log.exception("delivery round crashed; will try again next round")
 
 
 def main():

@@ -20,7 +20,11 @@ ratings with reasons, same-event check); code computes importance. Built but **s
 **Stage 2a, Step 3 — done.** Validity labels from rules in code (`validity.py`), with label history;
 Sonnet double-check before any 🚨 (`alert_check.py`). Not yet wired into delivery (step 4).
 
-Next up: **Stage 2a, Step 4 — alert tiers, digest, Siggy images, platform-neutral messages.**
+**Stage 2a, Step 4 — done.** Delivery built (`delivery.py`, `messages.py`, Telegram renderer):
+🚨/🔔/📰 tiers, 3/day alert cap, Sonnet gate, 8am Central digest, budget notices. **Switched off**
+(`delivery.enabled: false`). Preview messages of all three formats sent to Nicholas's phone.
+
+Next up: **Stage 2a, Step 5 — Haiku vs. Sonnet comparison + tune the topic bonus (task #8).**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -89,8 +93,13 @@ Next up: **Stage 2a, Step 4 — alert tiers, digest, Siggy images, platform-neut
       stories: all correctly judged "not alert-worthy" with specific reasons. Dedup candidate check
       widened (one shared distinctive word) after Canva duplicates slipped through; merged them.
       25 tests passing.
-- [ ] Stage 2a step 4: alert tiers (🚨/🔔/📰/stored), platform-neutral messages, Siggy image per
-      message type, alert cap, morning digest, budget warning message
+- [x] Stage 2a step 4: `messages.py` (platform-neutral StoryCard/Message), `telegram.deliver()`
+      renders them (🚨 = red Siggy photo + caption, with sound; 🔔 = text, silent; 📰 digest = logo
+      photo + numbered list + separate "Unconfirmed" section; notices = logo). `delivery.py`:
+      routing (🟠/🔴 → digest only, never ping), Sonnet verdict reused (never paid twice), daily cap
+      in Central time, fresh-only (12h) immediate sends, digest once/day at 8am, budget notices at
+      80% / 100% once a month. `deliveries` table keyed by recipient = platform:account (migration 6).
+      Digest timezone switched to America/Chicago (GitHub page showed CST). 31 tests passing.
 - [ ] Later: resolve Google News links (Reuters/AP are headline-only → "partial" for now)
 - [ ] Stage 2a step 5: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
 - [ ] Stage 2a step 6: switch on triage, restart service, watch first day's costs
@@ -135,6 +144,9 @@ Next up: **Stage 2a, Step 4 — alert tiers, digest, Siggy images, platform-neut
   server later (task #13) removes this gap.
 - **Installing/starting the background service is blocked for Claude** by permission settings —
   Nicholas runs `scripts/install_mac_service.sh` (also needed to restart after code changes).
+- **Siggy image choice:** 🚨 alerts get red Siggy; digest + notices get the yellow logo; 🔔 silent
+  messages are text-only by default to keep the chat readable (`delivery.image_on_silent`).
+  Brief says "logo for normal messages" — confirm with Nicholas.
 - **Unverified stories never alert** (brief rule) — step 4 must route 🟠/🔴 to the digest only.
   Real "investigate first" comes with Stage 3 search.
 - **Google News links** for Reuters/AP still point to news.google.com, not the real article.

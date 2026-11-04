@@ -106,6 +106,23 @@ The model rates four factors from 1 to 5; the code does the math.
 Company performance claims are marked **self-reported** until independently verified.
 Unverified and Disputed stories never go out as alerts — digest only, clearly labeled.
 
+## What arrives on your phone
+
+| | When | Looks like |
+|---|---|---|
+| 🚨 **Alert** | Importance 75+, Sonnet agrees it's worth interrupting you, max 3/day | Red-alert Siggy, with sound |
+| 🔔 **Silent** | Importance 50–74 | Text message, no sound |
+| 📰 **Digest** | Importance 25–49, plus anything unconfirmed | One message each morning at 8am |
+| — | Below 25 | Stored and searchable, never sent |
+
+Every story shows its validity label **and the reason**, a self-reported flag where it applies,
+whether it was summarized from a preview only, the four factor ratings, and links to each outlet.
+🟠 Unverified and 🔴 Disputed stories never ping you; they wait in the digest's clearly labeled
+"Unconfirmed" section.
+
+Messages are built in a platform-neutral form first and rendered for Telegram last, so other
+platforms can be added without changing the agent.
+
 ## Meet Siggy
 
 | | |

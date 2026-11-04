@@ -88,7 +88,15 @@ budget:
 # --- Morning digest delivery ---
 digest:
   send_hour: 8                # hour of day (24-hour clock) to send the digest
-  timezone: America/New_York  # which clock to use for the digest hour
+  timezone: America/Chicago   # your clock: digest hour and "per day" alert cap use it (Central time)
+  max_items: 15               # most stories in one digest (the highest-scoring ones)
+  lookback_hours: 24          # stories first seen in this window are eligible for the digest
+
+# --- Delivery: what gets sent to your phone ---
+delivery:
+  enabled: false              # OFF until Nicholas approves in step 6
+  max_age_hours: 12           # only send 🚨/🔔 right away for stories first seen this recently
+  image_on_silent: false      # also attach yellow Siggy to every 🔔 message (busier chat)
 
 # --- AI keyword filter (free, runs in code before any paid AI step) ---
 # Sources marked ai_filter: true cover more than AI, so their stories must mention
