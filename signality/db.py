@@ -149,6 +149,32 @@ MIGRATIONS = [
     """
     ALTER TABLE story_triage ADD COLUMN ai_related INTEGER NOT NULL DEFAULT 1;
     """,
+    # 5 - Stage 2a: validity labels (a new row each time a story's label changes,
+    #     so its full history can be shown) and Sonnet's double-check on alerts.
+    """
+    CREATE TABLE story_validity (
+        id                  INTEGER PRIMARY KEY,
+        story_id            INTEGER NOT NULL REFERENCES stories(id),
+        label               TEXT NOT NULL,   -- confirmed | likely | reported | unverified | disputed | opinion
+        reason              TEXT NOT NULL,
+        independent_outlets INTEGER NOT NULL,
+        self_reported       INTEGER NOT NULL,
+        set_at              TEXT NOT NULL
+    );
+    CREATE INDEX idx_story_validity_story ON story_validity(story_id, id);
+
+    CREATE TABLE alert_checks (
+        id              INTEGER PRIMARY KEY,
+        story_id        INTEGER NOT NULL REFERENCES stories(id),
+        model           TEXT NOT NULL,
+        created_at      TEXT NOT NULL,
+        send_as_alert   INTEGER NOT NULL,   -- 1 = Sonnet agrees it deserves a loud alert
+        reason          TEXT NOT NULL,
+        validity_agrees INTEGER NOT NULL,
+        validity_note   TEXT NOT NULL,
+        cost_usd        REAL NOT NULL
+    );
+    """,
 ]
 
 

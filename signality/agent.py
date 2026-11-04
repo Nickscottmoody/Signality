@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, db, fetcher, triage
+from . import ai, db, fetcher, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -55,12 +55,13 @@ def one_round():
     try:
         conn = db.connect(cfg["storage"]["db_path"])
         t = triage.run(conn, cfg)
+        relabeled = validity.refresh_recent(conn, cfg)  # free: rules only, no AI
         budget = ai.budget_status(conn, cfg)
         conn.close()
         log.info(
-            "triage: %d scored, %d merged as duplicates, %d failed, %d too old | $%.4f this round | "
-            "$%.2f of $%s this month",
-            t["triaged"], t["merged"], t["failed"], t["too_old"], t["cost_usd"],
+            "triage: %d scored, %d merged as duplicates, %d failed, %d too old, %d relabeled | "
+            "$%.4f this round | $%.2f of $%s this month",
+            t["triaged"], t["merged"], t["failed"], t["too_old"], relabeled, t["cost_usd"],
             budget["spent"], budget["cap"],
         )
     except ai.BudgetExceeded as e:

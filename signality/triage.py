@@ -15,7 +15,7 @@ import argparse
 import json
 from datetime import datetime, timedelta, timezone
 
-from . import ai, article_text, db, scoring
+from . import ai, article_text, db, scoring, validity
 from .dedup import similarity
 from .settings import load_config
 
@@ -128,6 +128,10 @@ def pick_article(conn, story_id):
     ).fetchone()
 
 
+# Words in so many AI headlines that sharing them says nothing about being the same event.
+TOO_COMMON = {"ai", "a.i", "artificial", "intelligence", "tech", "data", "model", "models", "company"}
+
+
 def candidates(conn, story_id, words, cfg):
     """Recent triaged stories whose headlines share words with this one (possible same event)."""
     since = (datetime.now(timezone.utc) - timedelta(hours=cfg["dedup"]["window_hours"])).isoformat(timespec="seconds")
@@ -142,7 +146,7 @@ def candidates(conn, story_id, words, cfg):
     scored = {}
     for r in rows:
         other = set(r["title_words"].split())
-        if len(words & other) >= 2:
+        if (words & other) - TOO_COMMON:  # share at least one distinctive word (e.g. "canva")
             score = similarity(words, other)
             if score > scored.get(r["story_id"], (0,))[0]:
                 scored[r["story_id"]] = (score, r["title"], r["source_name"])
@@ -199,6 +203,7 @@ def triage_story(conn, cfg, story_id, model=None, purpose="live"):
     same = data["same_event_as"].strip()
     if purpose == "live" and same.isdigit() and int(same) in {sid for sid, _, _ in nearby}:
         merge(conn, story_id, int(same))
+        validity.update(conn, int(same))  # a new outlet may upgrade the label
         return {"merged_into": int(same), "cost_usd": cost, "title": article["title"]}
 
     ratings = {f: data[f]["score"] for f in scoring.FACTORS}
@@ -225,6 +230,9 @@ def triage_story(conn, cfg, story_id, model=None, purpose="live"):
     if purpose == "live":
         conn.execute("UPDATE stories SET status = 'triaged' WHERE id = ?", (story_id,))
     conn.commit()
+    if purpose == "live":
+        label = validity.update(conn, story_id)
+        row["validity"], row["validity_reason"] = label["label"], label["reason"]
     return {**row, "source": article["source_name"], "original_title": article["title"]}
 
 
@@ -277,6 +285,8 @@ def show(result):
           f"sourcing={result['sourcing']}{' (' + result['attributed_to'] + ')' if result['attributed_to'] else ''}"
           f"{'  SELF-REPORTED' if result['self_reported'] else ''}"
           f"{'  NOT AI -> stored only' if not result['ai_related'] else ''}")
+    if "validity" in result:
+        print(f"  {validity.LABELS[result['validity']]}: {result['validity_reason']}")
     for f in scoring.FACTORS:
         print(f"  {f:<8}{result[f]}  {result[f + '_reason']}")
 

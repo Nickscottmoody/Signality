@@ -17,7 +17,10 @@ stories in `data/signality.db`. Telegram bot @Signalitynewsbot delivers messages
 ratings with reasons, same-event check); code computes importance. Built but **switched off**
 (`triage.enabled: false`) until the cost is approved in step 6.
 
-Next up: **Stage 2a, Step 3 — validity labels (rules in code + Sonnet check on alerts).**
+**Stage 2a, Step 3 — done.** Validity labels from rules in code (`validity.py`), with label history;
+Sonnet double-check before any 🚨 (`alert_check.py`). Not yet wired into delivery (step 4).
+
+Next up: **Stage 2a, Step 4 — alert tiers, digest, Siggy images, platform-neutral messages.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -78,8 +81,14 @@ Next up: **Stage 2a, Step 3 — validity labels (rules in code + Sonnet check on
       table (per model + purpose, so comparisons fit), ai_related flag. Haiku same-event check merged
       The Information + AP "Google/schools AI" (reworded) correctly. 15 tests passing.
       Sample of 22: avg $0.00034/story → ~$1.00-1.50/month at 100-150 stories/day.
-- [ ] Stage 2a step 3: validity labels (rules in code from sourcing + independent outlets; Sonnet
-      check before any 🚨)
+- [x] Stage 2a step 3: `validity.py` decides ✅🟢🟡🟠🔴💬 from triage sourcing + independent outlets
+      (repeats like "FT says" and an outlet relaying another count once; primary source → ✅;
+      opinion → no label). `story_validity` keeps every label change (for receipts later).
+      Labels refresh for free each round as outlets join. `alert_check.py`: Sonnet reviews any
+      alert-tier story (importance + sourcing + label check), ~$0.003-0.005 each. Tested on 3 real
+      stories: all correctly judged "not alert-worthy" with specific reasons. Dedup candidate check
+      widened (one shared distinctive word) after Canva duplicates slipped through; merged them.
+      25 tests passing.
 - [ ] Stage 2a step 4: alert tiers (🚨/🔔/📰/stored), platform-neutral messages, Siggy image per
       message type, alert cap, morning digest, budget warning message
 - [ ] Later: resolve Google News links (Reuters/AP are headline-only → "partial" for now)
@@ -126,6 +135,8 @@ Next up: **Stage 2a, Step 3 — validity labels (rules in code + Sonnet check on
   server later (task #13) removes this gap.
 - **Installing/starting the background service is blocked for Claude** by permission settings —
   Nicholas runs `scripts/install_mac_service.sh` (also needed to restart after code changes).
+- **Unverified stories never alert** (brief rule) — step 4 must route 🟠/🔴 to the digest only.
+  Real "investigate first" comes with Stage 3 search.
 - **Google News links** for Reuters/AP still point to news.google.com, not the real article.
   Resolve them in Stage 2a when we need article text.
 - Publishing actions (creating public repos, changing visibility) must be run by Nicholas;
