@@ -112,8 +112,12 @@ was recruited by China's spy agency"), which would have sent duplicate receipts.
   states the claim as fact, not when it says it's investigating reports.
 57 tests passing.
 
-Next up: **restart so the duplicate fix is live, then close out Stage 2b.** Still to confirm: Nov 10
-8am digest + first full day's cost.
+**Stage 2b — complete and live** (restart 15:09 CT Nov 9; 17/17 sources ok; claim checks running).
+Month-to-date AI spend $0.47 (includes one-off comparison tests).
+
+Next up: **confirm the Nov 10 8am digest (first one; should include a 🧾 Receipts section only if a claim
+resolves overnight) + first full day's cost; then Stage 2c — onboarding interview (/profile), personal
+profile, and "🎯 How it affects you" (task #10).**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
