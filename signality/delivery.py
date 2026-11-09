@@ -1,7 +1,8 @@
 """Decides what reaches you, when, and how loudly.
 
   🚨 alert   importance >= alert threshold, Sonnet agrees, under the daily cap
-  🔔 silent  importance >= silent threshold (or an alert Sonnet declined / over the cap)
+  🔔 silent  importance >= silent threshold (or an alert Sonnet declined / over the cap);
+             with delivery.silent_messages off, these wait for the digest instead
   📰 digest  importance >= digest threshold, sent once each morning
   stored     everything else: saved and searchable, never sent
 
@@ -29,10 +30,16 @@ def local_now(cfg):
     return datetime.now(ZoneInfo(cfg["digest"]["timezone"]))
 
 
+def silent_messages_on(cfg):
+    return cfg.get("delivery", {}).get("silent_messages", True)
+
+
 def route(importance, label, cfg):
     """The tier a story is headed for, before the Sonnet check and the daily cap."""
     tier = scoring.tier(importance, cfg)
     if label in UNCONFIRMED and tier in ("alert", "silent"):
+        return "digest"
+    if tier == "silent" and not silent_messages_on(cfg):
         return "digest"
     return tier
 
@@ -101,6 +108,8 @@ def send_immediate(conn, cfg):
                     tier = "silent"
                 else:
                     note = f"Why this is an alert: {verdict['reason']}"
+        if tier == "silent" and not silent_messages_on(cfg):
+            continue  # not alert-worthy after all: it waits for the morning digest
         card = messages.story_card(conn, story_id)
         message = messages.Message(kind=tier, silent=tier != "alert", image="alert" if tier == "alert" else None,
                                    cards=[card], note=note)

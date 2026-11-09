@@ -52,8 +52,8 @@ topics:
   companies_funding: 1.0      # company news, funding rounds, acquisitions
   policy: 1.0                 # laws, regulation, government action
   tools: 1.0                  # new AI products and developer tools
-  jobs: 1.3                   # AI's effect on jobs and careers (favored)
-  finance_analytics: 1.3      # finance, data and analytics work (favored)
+  jobs: 1.1                   # AI's effect on jobs and careers (favored: small boost, chosen in step 5)
+  finance_analytics: 1.1      # finance, data and analytics work (favored: small boost, chosen in step 5)
 
 # --- Which Claude model does which job (swap these strings to change models) ---
 models:
@@ -103,6 +103,7 @@ digest:
 delivery:
   enabled: false              # OFF until Nicholas approves in step 6
   max_age_hours: 12           # only send 🚨/🔔 right away for stories first seen this recently
+  silent_messages: false      # false = 🔔 stories (50-74) wait for the morning digest instead of arriving during the day
   image_on_silent: false      # also attach yellow Siggy to every 🔔 message (busier chat)
 
 # --- AI keyword filter (free, runs in code before any paid AI step) ---

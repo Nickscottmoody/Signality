@@ -48,3 +48,9 @@ def test_digest_always_fits_in_one_message():
     text, kept, _ = telegram.fit_digest(message)
     assert telegram.visible_length(text) <= telegram.TEXT_LIMIT
     assert 3 <= len(kept) < 30 and f"plus {30 - len(kept)} more" in text
+
+
+def test_silent_tier_can_be_folded_into_the_digest():
+    cfg = {**CFG, "delivery": {"silent_messages": False}}
+    assert delivery.route(60, "reported", cfg) == "digest"
+    assert delivery.route(80, "confirmed", cfg) == "alert"   # alerts are unaffected

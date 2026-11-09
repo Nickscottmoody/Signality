@@ -111,8 +111,8 @@ Unverified and Disputed stories never go out as alerts — digest only, clearly 
 | | When | Looks like |
 |---|---|---|
 | 🚨 **Alert** | Importance 75+, Sonnet agrees it's worth interrupting you, max 3/day | Red-alert Siggy, with sound |
-| 🔔 **Silent** | Importance 50–74 | Text message, no sound |
-| 📰 **Digest** | Importance 25–49, plus anything unconfirmed | One message each morning at 8am |
+| 🔔 **Silent** | Importance 50–74 (optional; off by default, so these lead the digest) | Text message, no sound |
+| 📰 **Digest** | Importance 25–74, plus anything unconfirmed | One message each morning at 8am |
 | — | Below 25 | Stored and searchable, never sent |
 
 Every story shows its validity label **and the reason**, a self-reported flag where it applies,

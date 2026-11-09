@@ -27,9 +27,12 @@ Sonnet double-check before any 🚨 (`alert_check.py`). Not yet wired into deliv
 **Stage 2a, Step 5 — in progress.** Haiku vs. Sonnet compared on 21 stories (`signality/compare.py`,
 report in `data/reports/`). **Decision: Haiku stays for triage** (≈$1/mo vs ≈$20.50/mo for Sonnet;
 all 84 factor ratings within 1 point; same validity label 21/21). Sonnet stays for 🚨 alert checks.
-Still to decide: topic bonus size, and whether to keep 🔔 silent messages or fold them into the digest.
+Nicholas's tuning decisions: **topic bonus ×1.1** (jobs, finance_analytics), and **🔔 silent messages
+folded into the digest** (`delivery.silent_messages: false`). Phone gets only the 8am digest plus rare 🚨.
 
-Next up: **finish step 5 decisions, then Step 6 — switch triage + delivery on and watch costs.**
+**Stage 2a, Step 5 — done.**
+
+Next up: **Stage 2a, Step 6 — switch triage + delivery on, restart the service, watch first day's costs.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -109,7 +112,8 @@ Next up: **finish step 5 decisions, then Step 6 — switch triage + delivery on 
 - [x] Stage 2a step 5 (part 1): Sonnet run on the same 21 stories ($0.15). `compare.py` prints agreement,
       cost, and messages/day under 5 bonus options (×1.3 ≈28 🔔/day, ×1.1 or +5 ≈9, none ≈5) and writes
       an HTML side-by-side report. Sonnet scores more generously (≈37-50 🔔/day). Haiku chosen.
-- [ ] Stage 2a step 5 (part 2): Nicholas picks topic bonus + silent tier (task #8)
+- [x] Stage 2a step 5 (part 2): bonus ×1.1; 🔔 folded into digest (route() sends 50-74 to digest when
+      `delivery.silent_messages` is false; declined/over-cap alerts also wait for the digest). 32 tests.
 - [ ] Stage 2a step 6: switch on triage, restart service, watch first day's costs
 
 ## Open issues
@@ -138,9 +142,8 @@ Next up: **finish step 5 decisions, then Step 6 — switch triage + delivery on 
   working, so this is just the current format.
 - **Telegram sender uses `requests`** (simple, synchronous). Two-way commands (/settings, /profile, …)
   will need `python-telegram-bot`, already in requirements.txt.
-- **⚠️ Topic boost (×1.3 for jobs/finance) floods the 🔔 tier.** In a 22-story sample, 32% landed in
-  🔔 silent with the boost vs. 5% without → ~30-50 silent messages/day vs. ~5-7. Decide in step 5
-  (task #8): lower the multiplier, use a flat point bonus, or raise the silent threshold.
+- **Resolved in step 5:** the ×1.3 topic boost flooded the 🔔 tier (~28/day); now ×1.1 and 🔔 folded
+  into the digest. Note: this departs from the brief's "50-74 = 🔔 silent message" by Nicholas's choice.
 - **"Not AI" check:** Federal Register now uses the keyword filter (its search matches passing
   mentions). Haiku also flags `ai_related`; false → importance 0, stored only. Rule: AI must be
   central/significant, incl. AI's effect on markets/jobs/policy. Borderline: "Democrats' win rattles
