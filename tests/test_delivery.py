@@ -54,3 +54,17 @@ def test_silent_tier_can_be_folded_into_the_digest():
     cfg = {**CFG, "delivery": {"silent_messages": False}}
     assert delivery.route(60, "reported", cfg) == "digest"
     assert delivery.route(80, "confirmed", cfg) == "alert"   # alerts are unaffected
+
+
+def test_related_headlines_are_grouped_but_different_stories_are_not():
+    from signality.dedup import key_words, related
+    a = key_words("Nvidia board opens probe into CEO Jensen Huang")
+    assert related(a, key_words("Trump backs Nvidia CEO Jensen Huang after affair admission"))
+    assert not related(a, key_words("Nvidia announces new Korea investments"))
+    assert not related(key_words("OpenAI raises new AI funding"), key_words("Anthropic AI model release"))
+
+
+def test_digest_item_shows_related_count():
+    c = card()
+    c.related_ids = [5, 6, 7]
+    assert "➕ 3 related stories on this" in telegram.render_digest_item(1, c)

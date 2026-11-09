@@ -115,8 +115,10 @@ def render_card(card, kind, note=""):
 def render_digest_item(n, card):
     extras = " · 📄 partial" if card.partial else ""
     extras += " · 🏷️ self-reported" if card.self_reported else ""
+    more = len(card.related_ids)
+    related = f"\n➕ {more} related {'story' if more == 1 else 'stories'} on this" if more else ""
     return (f"<b>{n}. {_e(card.headline)}</b>\n{_e(card.why_it_matters)}\n"
-            f"{card.label_text} · 📊 {card.importance}{extras} · {_links(card.sources, 2)}")
+            f"{card.label_text} · 📊 {card.importance}{extras} · {_links(card.sources, 2)}{related}")
 
 
 def render_unconfirmed_item(card):
@@ -170,7 +172,8 @@ def deliver(message, cfg, chat_id=None):
     if message.kind == "digest":
         text, cards, unconfirmed = fit_digest(message)
         result = send_message(text, chat_id, silent=True, image_url=image_urls.get("normal"))
-        return {"message_id": result["message_id"], "story_ids": [c.story_id for c in cards + unconfirmed]}
+        included = [c.story_id for c in cards + unconfirmed] + [i for c in cards + unconfirmed for i in c.related_ids]
+        return {"message_id": result["message_id"], "story_ids": included}
 
     body = f"<b>{_e(message.title)}</b>\n{_e(message.text)}" if message.title else _e(message.text)
     result = with_image(body, message.image, message.silent)

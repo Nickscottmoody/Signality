@@ -32,7 +32,12 @@ folded into the digest** (`delivery.silent_messages: false`). Phone gets only th
 
 **Stage 2a, Step 5 — done.**
 
-Next up: **Stage 2a, Step 6 — switch triage + delivery on, restart the service, watch first day's costs.**
+**Stage 2a, Step 6 — in progress.** `triage.enabled` and `delivery.enabled` are **true**. Backlog: 138
+recent stories scored once by hand ($0.056; 28 reworded duplicates merged), 617 older marked too_old.
+Today's (Nov 9) digest skipped on purpose (switched on after 8am) → first real digest Nov 10, 8am CT.
+Waiting on Nicholas to restart the service so it runs the new code.
+
+Next up: **restart service, verify triage + delivery rounds in the log, watch first day's cost.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -44,6 +49,8 @@ Next up: **Stage 2a, Step 6 — switch triage + delivery on, restart the service
 | Stop background service | `./scripts/uninstall_mac_service.sh` |
 | See what the agent did | `tail -20 data/signality.log` |
 | Service startup errors | `~/Library/Logs/signality-launchd.log` |
+| Health + cost check | `./.venv/bin/python -m signality.status` |
+| Haiku vs. Sonnet report | `./.venv/bin/python -m signality.compare` |
 | Run tests | `./.venv/bin/python -m pytest -q` |
 
 **After changing any code, restart the service** — a running program keeps using the old code.
@@ -160,6 +167,10 @@ Next up: **Stage 2a, Step 6 — switch triage + delivery on, restart the service
   sent as ONE message with Siggy shown above it via a link preview of the public image URL
   (`siggy.image_urls`, raw.githubusercontent.com — **requires the GitHub repo to stay public**).
   The digest keeps as many top stories as fit in one message (~12) and ends with "…plus N more".
+- **Developing stories (stopgap until Stage 3b):** the Nov 2026 Nvidia/Jensen Huang spy-affair saga
+  produced 30+ distinct articles that are NOT the "same event". Digest now folds stories whose Haiku
+  headlines share ≥2 distinctive words (`dedup.related`) under the top one ("➕ N related"), and a
+  saga that already triggered a 🚨 in the last 24h can't alert again. Real threading/updates = Stage 3b.
 - **Siggy image choice:** 🚨 alerts get red Siggy; digest + notices get the yellow logo; 🔔 silent
   messages are text-only by default to keep the chat readable (`delivery.image_on_silent`).
   Brief says "logo for normal messages" — confirm with Nicholas.

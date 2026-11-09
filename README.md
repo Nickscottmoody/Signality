@@ -160,6 +160,12 @@ crashes (undo with `scripts/uninstall_mac_service.sh`):
 ./scripts/install_mac_service.sh
 ```
 
+Check health and AI spending:
+
+```bash
+./.venv/bin/python -m signality.status
+```
+
 Send a test message to your Telegram (needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_USER_ID` in `.env`):
 
 ```bash

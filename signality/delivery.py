@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from . import ai, alert_check, db, messages, scoring, telegram, validity
+from .dedup import key_words, related
 from .settings import secret
 
 UNCONFIRMED = ("unverified", "disputed")
@@ -64,6 +65,19 @@ def alerts_sent_today(conn, cfg):
     ).fetchone()[0]
 
 
+def recently_alerted_on_same_saga(conn, headline, hours=24):
+    """True if a 🚨 about a related story (same saga) went out in the last `hours`."""
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat(timespec="seconds")
+    words = key_words(headline)
+    for (other,) in conn.execute(
+        "SELECT t.headline FROM deliveries d JOIN story_triage t ON t.story_id = d.story_id AND t.purpose = 'live'"
+        " WHERE d.kind = 'alert' AND d.recipient = ? AND d.sent_at >= ?", (recipient(), since),
+    ):
+        if related(words, key_words(other)):
+            return True
+    return False
+
+
 def _alert_verdict(conn, cfg, story_id):
     """Sonnet's verdict (reusing an earlier one so we never pay twice). None if it couldn't run."""
     row = conn.execute(
@@ -98,7 +112,12 @@ def send_immediate(conn, cfg):
             continue
         note = ""
         if tier == "alert":
-            if alerts_sent_today(conn, cfg) >= cap:
+            headline = conn.execute(
+                "SELECT headline FROM story_triage WHERE story_id = ? AND purpose = 'live'", (story_id,)
+            ).fetchone()[0]
+            if recently_alerted_on_same_saga(conn, headline):
+                tier, note = "silent", "Related to an alert you already got today, so sent quietly."
+            elif alerts_sent_today(conn, cfg) >= cap:
                 tier, note = "silent", f"Alert-level story sent quietly: today's limit of {cap} alerts is reached."
             else:
                 verdict = _alert_verdict(conn, cfg, story_id)
@@ -131,9 +150,15 @@ def build_digest(conn, cfg):
         """,
         (since, cfg["importance"]["thresholds"]["digest"], recipient()),
     ).fetchall()
-    confirmed, unconfirmed = [], []
-    for story_id, _ in rows:
+    confirmed, unconfirmed, picked = [], [], []
+    for story_id, _ in rows:  # highest score first
         card = messages.story_card(conn, story_id)
+        words = key_words(card.headline)
+        lead = next((c for c, w in picked if related(words, w)), None)
+        if lead is not None:  # same saga as a higher-ranked story: fold it in, don't repeat it
+            lead.related_ids.append(story_id)
+            continue
+        picked.append((card, words))
         (unconfirmed if card.label in UNCONFIRMED else confirmed).append(card)
     confirmed = confirmed[: cfg["digest"]["max_items"]]
     today = local_now(cfg)

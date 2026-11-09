@@ -25,6 +25,7 @@ class StoryCard:
     factors: dict           # impact/breadth/urgency/novelty -> 1-5
     topics: list
     sources: list           # [(outlet name, url), ...]
+    related_ids: list = field(default_factory=list)  # digest: other stories on the same saga, folded in
 
     @property
     def label_text(self):

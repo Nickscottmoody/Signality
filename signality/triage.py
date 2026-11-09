@@ -16,7 +16,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from . import ai, article_text, db, scoring, validity
-from .dedup import similarity
+from .dedup import TOO_COMMON, similarity
 from .settings import load_config
 
 SYSTEM = """You are the triage analyst for Signality, a personal AI-news agent whose motto is \
@@ -126,10 +126,6 @@ def pick_article(conn, story_id):
         """,
         (story_id,),
     ).fetchone()
-
-
-# Words in so many AI headlines that sharing them says nothing about being the same event.
-TOO_COMMON = {"ai", "a.i", "artificial", "intelligence", "tech", "data", "model", "models", "company"}
 
 
 def candidates(conn, story_id, words, cfg):

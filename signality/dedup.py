@@ -63,3 +63,18 @@ def similarity(words_a, words_b):
     if not words_a or not words_b:
         return 0.0
     return len(words_a & words_b) / len(words_a | words_b)
+
+
+# Words in so many AI headlines that sharing them says nothing about being the same story.
+TOO_COMMON = {"ai", "a.i", "artificial", "intelligence", "tech", "data", "model", "models", "company",
+              "companies", "billion", "million", "new", "deal", "us", "u.s"}
+
+
+def key_words(title):
+    """The distinctive words of a headline (e.g. {'nvidia', 'huang', 'probe'})."""
+    return title_words(title) - TOO_COMMON
+
+
+def related(words_a, words_b):
+    """True if two headlines share at least two distinctive words (same saga, maybe different angle)."""
+    return len(words_a & words_b) >= 2

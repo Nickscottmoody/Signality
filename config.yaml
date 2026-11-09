@@ -39,7 +39,7 @@ importance:
 
 # --- Triage: Haiku reads each new story, summarizes it, and rates it ---
 triage:
-  enabled: false              # OFF until Nicholas approves the cost; then the agent triages every round
+  enabled: true               # ON (approved in Stage 2a step 6): the agent triages new stories every round
   max_per_round: 40           # most stories to triage in one round (caps cost per round)
   max_story_age_hours: 48     # never spend money on stories first seen longer ago than this
   fetch_full_text: true       # read the full article page when it's free to read (better summaries)
@@ -101,7 +101,7 @@ digest:
 
 # --- Delivery: what gets sent to your phone ---
 delivery:
-  enabled: false              # OFF until Nicholas approves in step 6
+  enabled: true               # ON (switched on in Stage 2a step 6); set false to stop all messages
   max_age_hours: 12           # only send 🚨/🔔 right away for stories first seen this recently
   silent_messages: false      # false = 🔔 stories (50-74) wait for the morning digest instead of arriving during the day
   image_on_silent: false      # also attach yellow Siggy to every 🔔 message (busier chat)
