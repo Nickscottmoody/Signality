@@ -38,9 +38,13 @@ Today's (Nov 9) digest skipped on purpose (switched on after 8am) → first real
 Service restarted on new code (13:38 CT; first round logged `triage:`). Install script fixed: it now
 waits for the old copy to stop (first attempt failed with "Bootstrap failed: 5").
 Digest window changed from a fixed 24h to "since the last digest, max 48h" so skipped days (like
-today) and days the Mac was off don't drop stories. Needs one more restart to load that change.
+today) and days the Mac was off don't drop stories. Restarted again 13:39 CT on this code; clean.
 
-Next up: **restart once more, then confirm the Nov 10 8am digest arrives and check first-day cost.**
+**Stage 2a — built and live.** Not yet observed: the first real digest (Nov 10, 8am CT) and a full
+day of costs.
+
+Next up: **confirm the Nov 10 digest arrived and looked right; check `signality.status` for the first
+full day's cost; then start Stage 2b (claim extraction + receipts).**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -124,7 +128,8 @@ Next up: **restart once more, then confirm the Nov 10 8am digest arrives and che
       an HTML side-by-side report. Sonnet scores more generously (≈37-50 🔔/day). Haiku chosen.
 - [x] Stage 2a step 5 (part 2): bonus ×1.1; 🔔 folded into digest (route() sends 50-74 to digest when
       `delivery.silent_messages` is false; declined/over-cap alerts also wait for the digest). 32 tests.
-- [ ] Stage 2a step 6: switch on triage, restart service, watch first day's costs
+- [x] Stage 2a step 6: switched on Nov 9; backlog scored; service restarted on new code; status command.
+- [ ] Confirm first real digest (Nov 10 8am) + first full day's cost
 
 ## Open issues
 - **Python HTTPS certificates:** this Mac's Python 3.12 cannot verify certificates on its own, so
