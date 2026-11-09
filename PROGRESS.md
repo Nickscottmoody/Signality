@@ -45,8 +45,16 @@ Huang admits infidelity amid probe…", 69, 🟢 Likely); Nicholas confirmed it 
 the other candidate ("OpenAI and Anthropic valuations fall", 70) for thin, preview-only sourcing.
 Not yet observed: the first real digest (Nov 10, 8am CT) and a full day of costs.
 
-Next up: **confirm the Nov 10 digest arrived and looked right; check `signality.status` for the first
-full day's cost; then start Stage 2b (claim extraction + receipts).**
+**Stage 2b, Step 1 — done (code), not yet live.** Haiku's triage call now also returns up to 4
+checkable claims per story (`claims.py`, migration 7: `claims` + `claim_events` history). Labels come
+from rules; only claims genuinely **in doubt** stay open (allegations, leaks, anonymous/unconfirmed
+reports, plans, self-reported results). Routine facts are labeled but `not_tracked` — Nicholas's brief
+says every Reported claim stays open; this narrows it to claims that could turn out wrong.
+Test on 18 stories: 19 claims, 9 open (e.g. NYT memo "China recruited Alice Huang" 🟡 open;
+Anthropic "Fable 5.2 30% faster" 🏷️ open; Meta $60B program due 2027-03-31). ~$0.0006/story.
+
+Next up: **restart service so claims start accumulating; then 2b Step 2 — match new evidence to open
+claims and let Sonnet resolve them.** Still to confirm: Nov 10 8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

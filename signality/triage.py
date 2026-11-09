@@ -15,7 +15,7 @@ import argparse
 import json
 from datetime import datetime, timedelta, timezone
 
-from . import ai, article_text, db, scoring, validity
+from . import ai, article_text, claims, db, scoring, validity
 from .dedup import TOO_COMMON, similarity
 from .settings import load_config
 
@@ -75,6 +75,26 @@ markets, investment, companies, jobs, or policy (for example, AI stocks moving, 
 companies). false only when AI is mentioned in passing or not at all (for example, general election \
 or market news that names AI once). Still fill in every other field.
 
+CLAIMS
+List up to 4 of the story's most important checkable factual claims, as separate items. Return an \
+empty list for opinion pieces or when nothing is checkable.
+- text: one sentence attributed to whoever makes the claim ("Nvidia says...", "According to people \
+familiar with the matter...", "Bloomberg reports..."). Specific enough to check later.
+- kind: event (something that happened or is happening) | future (a plan, launch, or commitment by \
+the organization involved, e.g. "will ship in March") | performance (a claim about results or \
+capability: benchmarks, revenue, user numbers, "fastest", "best").
+- basis: what this claim rests on, using the SOURCING values above except not_applicable.
+- claimant: who makes the claim (an organization, official, outlet, or "unnamed sources").
+- due_date: for future claims with a stated or clearly implied date, YYYY-MM-DD (use the last day \
+of a stated month or quarter); otherwise an empty string.
+- self_reported: true if an organization makes the claim about its own performance or results and \
+it is not independently verified.
+- in_doubt: true if the claim could still turn out wrong and later be confirmed or contradicted \
+(allegations, leaks, unconfirmed or anonymously sourced reports, plans and launch dates, \
+self-reported results). false for routine facts nobody disputes (market moves, what someone said \
+in public, official actions already taken).
+Leave out analysts' and commentators' predictions and anything that is only an opinion.
+
 SAME EVENT
 You may be given recent stories Signality already has. If this item reports the same specific \
 event as one of them (same announcement, deal, ruling, or release; not merely the same company or \
@@ -106,10 +126,27 @@ def schema(cfg):
             "self_reported": {"type": "boolean"},
             "ai_related": {"type": "boolean"},
             **{f: factor for f in scoring.FACTORS},
+            "claims": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string"},
+                        "kind": {"type": "string", "enum": ["event", "future", "performance"]},
+                        "basis": {"type": "string", "enum": claims.BASES},
+                        "claimant": {"type": "string"},
+                        "due_date": {"type": "string"},
+                        "self_reported": {"type": "boolean"},
+                        "in_doubt": {"type": "boolean"},
+                    },
+                    "required": ["text", "kind", "basis", "claimant", "due_date", "self_reported", "in_doubt"],
+                    "additionalProperties": False,
+                },
+            },
         },
         "required": ["same_event_as", "headline", "summary", "why_it_matters", "topics",
                      "content_type", "sourcing", "attributed_to", "self_reported", "ai_related",
-                     *scoring.FACTORS],
+                     *scoring.FACTORS, "claims"],
         "additionalProperties": False,
     }
 
@@ -233,6 +270,11 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
     if purpose == "live":
         label = validity.update(conn, story_id)
         row["validity"], row["validity_reason"] = label["label"], label["reason"]
+        already = conn.execute("SELECT 1 FROM claims WHERE story_id = ? LIMIT 1", (story_id,)).fetchone()
+        worth_tracking = data["ai_related"] and data["content_type"] != "opinion"
+        row["claims"] = [] if already or not worth_tracking else claims.record(
+            conn, story_id, article["id"], data["claims"][:4], label["independent_outlets"],
+            article["source_name"])
     return {**row, "source": article["source_name"], "original_title": article["title"]}
 
 
@@ -289,6 +331,10 @@ def show(result):
         print(f"  {validity.LABELS[result['validity']]}: {result['validity_reason']}")
     for f in scoring.FACTORS:
         print(f"  {f:<8}{result[f]}  {result[f + '_reason']}")
+    for c in result.get("claims", []):
+        due = f" (due {c['due_date']})" if c["due_date"] else ""
+        print(f"  CLAIM [{claims.LABELS[c['label']]} · {claims.STATUSES[c['status']]}{due}] {c['text']}")
+        print(f"        why: {c['reason']}")
 
 
 def main():

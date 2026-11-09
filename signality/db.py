@@ -191,6 +191,42 @@ MIGRATIONS = [
     CREATE UNIQUE INDEX idx_deliveries_once ON deliveries(story_id, recipient) WHERE story_id IS NOT NULL;
     CREATE INDEX idx_deliveries_day ON deliveries(recipient, local_date, kind);
     """,
+    # 7 - Stage 2b: claims (the receipts system). Claims are shared news data, not
+    #     per-user. Every change to a claim is a new row in claim_events, so its full
+    #     history (dates + evidence) can always be shown.
+    """
+    CREATE TABLE claims (
+        id              INTEGER PRIMARY KEY,
+        story_id        INTEGER NOT NULL REFERENCES stories(id),
+        article_id      INTEGER NOT NULL REFERENCES articles(id),  -- where it was first seen
+        text            TEXT NOT NULL,      -- one sentence, attributed ("OpenAI says...")
+        kind            TEXT NOT NULL,      -- event | future | performance
+        basis           TEXT NOT NULL,      -- what it rests on (same values as triage sourcing)
+        claimant        TEXT,               -- who is making the claim
+        due_date        TEXT,               -- future claims: when it should happen (YYYY-MM-DD)
+        self_reported   INTEGER NOT NULL,
+        label           TEXT NOT NULL,      -- current validity label
+        status          TEXT NOT NULL,      -- open | confirmed | walked_back | delayed | never_happened
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        resolved_at     TEXT
+    );
+    CREATE INDEX idx_claims_status ON claims(status);
+    CREATE INDEX idx_claims_story ON claims(story_id);
+
+    CREATE TABLE claim_events (
+        id                  INTEGER PRIMARY KEY,
+        claim_id            INTEGER NOT NULL REFERENCES claims(id),
+        at                  TEXT NOT NULL,
+        event               TEXT NOT NULL,  -- created | label_change | resolved
+        label               TEXT NOT NULL,
+        status              TEXT NOT NULL,
+        reason              TEXT NOT NULL,  -- the evidence, in words
+        evidence_article_id INTEGER REFERENCES articles(id),
+        decided_by          TEXT NOT NULL   -- 'rules' or the model that decided
+    );
+    CREATE INDEX idx_claim_events_claim ON claim_events(claim_id, id);
+    """,
 ]
 
 
