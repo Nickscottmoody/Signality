@@ -74,8 +74,11 @@ original and the evidence. Sonnet now returns a one-sentence `receipt_line` for 
 reasoning (stored in `detail`). One receipt pending (Huang/Alice Huang relationship ✅) → will go out
 live after the restart, since the Nvidia saga alerted.
 
-Next up: **restart to make 2b Steps 1-3 live; confirm the live receipt arrives; then 2b Step 4 — bias
-ratings + skew metric.** Still to confirm: Nov 10 8am digest + first full day's cost.
+**Steps 1-3 LIVE (restart 14:31 CT, Nov 9).** ✅ First real 🧾 receipt delivered live at 14:32 CT (Huang /
+Alice Huang relationship → Confirmed); Nicholas confirmed it arrived.
+
+Next up: **2b Step 4 — real political-lean ratings for sources + a skew metric.** Still to confirm:
+Nov 10 8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
