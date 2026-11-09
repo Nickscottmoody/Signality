@@ -86,8 +86,19 @@ primary sources excluded), with weekly buckets and a "too few to judge" flag und
 in `signality.status`. First run: Center 15% strong (n=92); other groups too small so far. 54 tests.
 No restart needed: sources and config are reread every round (status/bias are separate commands).
 
-Next up: **2b Step 5 — Haiku vs. Sonnet vs. Opus on ~10 hard claim decisions (task #9).** Still to
-confirm: Nov 10 8am digest + first full day's cost.
+**Stage 2b, Step 5 — done (task #9).** `compare_claims.py` ran the live claim-decision prompt through
+Haiku, Sonnet, and Opus on 11 cases: 5 real (all Nvidia-saga or Anthropic, all correctly "no change") +
+6 practice cases written to test the rules (interested-party denial → disputed, outlet correction →
+walked back, slipped launch → delayed, 600 confirmed vs 3,000 reported → disputed, independent 28% test of
+a 30% claim → confirmed, echoes of one rumor → no change). **All three models agreed on all 11 and got all
+6 practice cases right.** Cost per decision: Haiku $0.0003, Sonnet $0.0044, Opus $0.0103. Receipt wording:
+Opus slightly crisper, Sonnet adds attribution/dates, Haiku a bit clunkier. **Decision (Nicholas): keep
+Sonnet; Opus not worth it.** Caveats: small sample; real pool was thin (claims only hours old). Re-run
+`python -m signality.compare_claims` (delete data/reports/claim-cases.json first) after a few weeks of
+real resolutions. Report: data/reports/claims-haiku-sonnet-opus-2026-11-09.html.
+
+Next up: **fix duplicate claims across a saga (same claim saved once per story → would send duplicate
+receipts), then close out Stage 2b.** Still to confirm: Nov 10 8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -227,6 +238,8 @@ confirm: Nov 10 8am digest + first full day's cost.
 - **Alerts only for news first seen in the last 12h** (`delivery.max_age_hours`). The Nvidia probe story
   (77) was 13h old at switch-on, so it correctly went to the digest instead of alerting.
 - **Code changes need a service restart** (`scripts/install_mac_service.sh`); config changes don't.
+- **⚠️ Duplicate claims within a saga:** "Alice Huang was recruited…" exists as 3 claims from 3 stories.
+  If it resolves, Nicholas would get 3 receipts. Fix before closing Stage 2b.
 - **Siggy image choice:** 🚨 alerts get red Siggy; digest + notices get the yellow logo; 🔔 silent
   messages are text-only by default to keep the chat readable (`delivery.image_on_silent`).
   Brief says "logo for normal messages" — confirm with Nicholas.
