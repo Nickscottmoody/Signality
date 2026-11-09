@@ -24,7 +24,12 @@ Sonnet double-check before any 🚨 (`alert_check.py`). Not yet wired into deliv
 🚨/🔔/📰 tiers, 3/day alert cap, Sonnet gate, 8am Central digest, budget notices. **Switched off**
 (`delivery.enabled: false`). Preview messages of all three formats sent to Nicholas's phone.
 
-Next up: **Stage 2a, Step 5 — Haiku vs. Sonnet comparison + tune the topic bonus (task #8).**
+**Stage 2a, Step 5 — in progress.** Haiku vs. Sonnet compared on 21 stories (`signality/compare.py`,
+report in `data/reports/`). **Decision: Haiku stays for triage** (≈$1/mo vs ≈$20.50/mo for Sonnet;
+all 84 factor ratings within 1 point; same validity label 21/21). Sonnet stays for 🚨 alert checks.
+Still to decide: topic bonus size, and whether to keep 🔔 silent messages or fold them into the digest.
+
+Next up: **finish step 5 decisions, then Step 6 — switch triage + delivery on and watch costs.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -101,7 +106,10 @@ Next up: **Stage 2a, Step 5 — Haiku vs. Sonnet comparison + tune the topic bon
       80% / 100% once a month. `deliveries` table keyed by recipient = platform:account (migration 6).
       Digest timezone switched to America/Chicago (GitHub page showed CST). 31 tests passing.
 - [ ] Later: resolve Google News links (Reuters/AP are headline-only → "partial" for now)
-- [ ] Stage 2a step 5: Haiku vs. Sonnet side-by-side on ~20 stories (**Nicholas reviews**, task #8)
+- [x] Stage 2a step 5 (part 1): Sonnet run on the same 21 stories ($0.15). `compare.py` prints agreement,
+      cost, and messages/day under 5 bonus options (×1.3 ≈28 🔔/day, ×1.1 or +5 ≈9, none ≈5) and writes
+      an HTML side-by-side report. Sonnet scores more generously (≈37-50 🔔/day). Haiku chosen.
+- [ ] Stage 2a step 5 (part 2): Nicholas picks topic bonus + silent tier (task #8)
 - [ ] Stage 2a step 6: switch on triage, restart service, watch first day's costs
 
 ## Open issues

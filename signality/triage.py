@@ -183,8 +183,12 @@ def merge(conn, story_id, into_id):
     conn.commit()
 
 
-def triage_story(conn, cfg, story_id, model=None, purpose="live"):
-    """Triage one story. Returns the saved result dict, or {'merged_into': id}."""
+def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
+    """Triage one story. Returns the saved result dict, or {'merged_into': id}.
+
+    role picks the model and effort from config ('bulk' = Haiku normally). Side-by-side
+    comparisons use purpose='comparison', which never changes the live story.
+    """
     article = pick_article(conn, story_id)
     text, text_source = None, "snippet"
     if cfg["triage"]["fetch_full_text"] and not article["paywalled"] and article["via"] is None:
@@ -196,7 +200,7 @@ def triage_story(conn, cfg, story_id, model=None, purpose="live"):
 
     nearby = candidates(conn, story_id, set(article["title_words"].split()), cfg) if purpose == "live" else []
     data, cost = ai.ask_json(
-        conn, cfg, task="triage", role="bulk", model=model, story_id=story_id,
+        conn, cfg, task="triage" if purpose == "live" else f"triage_{purpose}", role=role, story_id=story_id,
         system=SYSTEM, prompt=build_prompt(article, text, text_source, nearby), schema=schema(cfg),
     )
 
@@ -213,7 +217,7 @@ def triage_story(conn, cfg, story_id, model=None, purpose="live"):
         final = 0  # not AI news: store it, never send it
     row = {
         "story_id": story_id, "article_id": article["id"], "purpose": purpose,
-        "model": model or cfg["models"]["bulk"], "created_at": db.utcnow(), "text_source": text_source,
+        "model": cfg["models"][role], "created_at": db.utcnow(), "text_source": text_source,
         "headline": data["headline"], "summary": data["summary"], "why_it_matters": data["why_it_matters"],
         "topics": json.dumps(topics), "content_type": data["content_type"], "sourcing": data["sourcing"],
         "attributed_to": data["attributed_to"] or None, "self_reported": int(data["self_reported"]),
