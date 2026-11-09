@@ -46,9 +46,9 @@ Most news tools summarize. Signality keeps a record.
                                          │
                    ┌─────────────────────┼─────────────────────┐
                    ▼                     ▼                     ▼
-             🚨 75-100            🔔 50-74              📰 25-49
-             instant alert        silent message        morning digest
-             (max 3/day)                                (0-24: stored only)
+             🚨 65-100            🔔 50-64              📰 25-49
+             alert, if Sonnet     silent message        morning digest
+             agrees (max 5/day)                                (0-24: stored only)
                    │                     │                     │
                    └─────────────────────┼─────────────────────┘
                                          ▼
@@ -110,9 +110,9 @@ Unverified and Disputed stories never go out as alerts — digest only, clearly 
 
 | | When | Looks like |
 |---|---|---|
-| 🚨 **Alert** | Importance 75+, Sonnet agrees it's worth interrupting you, max 3/day | Red-alert Siggy, with sound |
-| 🔔 **Silent** | Importance 50–74 (optional; off by default, so these lead the digest) | Text message, no sound |
-| 📰 **Digest** | Importance 25–74, plus anything unconfirmed | One message each morning at 8am |
+| 🚨 **Alert** | Importance 65+, Sonnet agrees it's worth interrupting you, max 5/day | Red-alert Siggy, with sound |
+| 🔔 **Silent** | Importance 50–64 (optional; off by default, so these lead the digest) | Text message, no sound |
+| 📰 **Digest** | Importance 25–64, alert-level stories Sonnet declined, plus anything unconfirmed | One message each morning at 8am |
 | — | Below 25 | Stored and searchable, never sent |
 
 Every story shows its validity label **and the reason**, a self-reported flag where it applies,

@@ -32,10 +32,10 @@ importance:
     urgency: 0.20             # how time-sensitive it is
     novelty: 0.20             # how new or surprising it is
   thresholds:
-    alert: 75                 # 75 and up: instant alert with sound
-    silent: 50                # 50-74: silent message
+    alert: 65                 # 65 and up: Sonnet reviews it for an instant alert with sound (lowered from 75)
+    silent: 50                # 50-64: silent message (or digest, if delivery.silent_messages is false)
     digest: 25                # 25-49: morning digest; below 25 is stored only
-  alert_cap_per_day: 3        # most loud alerts allowed in one day
+  alert_cap_per_day: 5        # most loud alerts allowed in one day (raised from 3)
 
 # --- Triage: Haiku reads each new story, summarizes it, and rates it ---
 triage:

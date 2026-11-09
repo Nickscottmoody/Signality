@@ -179,6 +179,9 @@ full day's cost; then start Stage 2b (claim extraction + receipts).**
   produced 30+ distinct articles that are NOT the "same event". Digest now folds stories whose Haiku
   headlines share ≥2 distinctive words (`dedup.related`) under the top one ("➕ N related"), and a
   saga that already triggered a 🚨 in the last 24h can't alert again. Real threading/updates = Stage 3b.
+- **Alert cutoff 75 → 65 and daily cap 3 → 5 (Nicholas, Nov 9).** Main Nvidia-saga pieces scored 64-69
+  (breadth 3), so 75 would never have alerted on it. At 65, ~1 story/day goes to Sonnet (≈$0.15/mo);
+  Sonnet is the real gate. Departs from the brief's "75-100 = 🚨, max 3/day" by Nicholas's choice.
 - **Alerts only for news first seen in the last 12h** (`delivery.max_age_hours`). The Nvidia probe story
   (77) was 13h old at switch-on, so it correctly went to the digest instead of alerting.
 - **Code changes need a service restart** (`scripts/install_mac_service.sh`); config changes don't.
