@@ -77,8 +77,17 @@ live after the restart, since the Nvidia saga alerted.
 **Steps 1-3 LIVE (restart 14:31 CT, Nov 9).** ✅ First real 🧾 receipt delivered live at 14:32 CT (Huang /
 Alice Huang relationship → Confirmed); Nicholas confirmed it arrived.
 
-Next up: **2b Step 4 — real political-lean ratings for sources + a skew metric.** Still to confirm:
-Nov 10 8am digest + first full day's cost.
+**Stage 2b, Step 4 — done.** Lean labels replaced with AllSides ratings (checked 2026-11-09; noted per
+source in config.yaml). Corrections vs. my original guesses: Bloomberg is Center (not lean-left); Reason
+is Center since Sept 2024 ("clear libertarian bias"), not lean-right. That left NO right-leaning source,
+so Nicholas approved adding **Washington Examiner (Technology)** — AllSides Lean Right, ~70% AI stories.
+17 sources now. `bias.py` audits share of ✅/🟢 vs 🟠/🔴 labels by lean (news outlets only, opinion and
+primary sources excluded), with weekly buckets and a "too few to judge" flag under 30 stories; summary
+in `signality.status`. First run: Center 15% strong (n=92); other groups too small so far. 54 tests.
+No restart needed: sources and config are reread every round (status/bias are separate commands).
+
+Next up: **2b Step 5 — Haiku vs. Sonnet vs. Opus on ~10 hard claim decisions (task #9).** Still to
+confirm: Nov 10 8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -178,8 +187,6 @@ Nov 10 8am digest + first full day's cost.
 - **Reuters and AP** have no public feeds; we use Google News searches limited to their sites.
   Their links go through Google first, so the fetcher must follow them to the real article.
 - **Paywalled** (WSJ, Bloomberg, FT, The Information): headline + preview only → mark "partial".
-- **Political lean values in config.yaml are placeholders.** Replace with ratings from a public
-  bias-rating site (e.g., AllSides) in Stage 2b.
 - **Reason** posts AI stories only every week or two (first run: its 5 AI stories were 14-27 days
   old, past the 7-day cutoff, so 0 saved). Mostly opinion pieces → tag "opinion" in Stage 2b.
 - **Free headline matching misses reworded duplicates.** Example: "Gemini 4 Carbon" from DeepMind vs.

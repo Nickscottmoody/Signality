@@ -27,7 +27,7 @@ Most news tools summarize. Signality keeps a record.
 ## How it works
 
 ```
-   16 news sources
+   17 news sources
          │  every 15 minutes
          ▼
    ┌───────────┐   non-AI stories + duplicates removed (free, no AI)
@@ -68,7 +68,7 @@ the same event written in very different words.
 
 ## Sources
 
-Sixteen feeds, chosen for credibility and freshness and tested before use. Reputation
+Seventeen feeds, chosen for credibility and freshness and tested before use. Reputation
 is only the starting point: Signality grades every source by how its claims hold up.
 
 | Kind | Sources |
@@ -76,11 +76,23 @@ is only the starting point: Signality grades every source by how its claims hold
 | **Primary** (what the organization itself said) | OpenAI · Google DeepMind · Google AI · NVIDIA · Hugging Face · Federal Register |
 | **Top-tier news** (fact-checking + correction policies) | Reuters · AP · Wall Street Journal · Bloomberg · Financial Times |
 | **AI specialists** | The Information · MIT Technology Review · Ars Technica · TechCrunch |
-| **Viewpoint balance** (policy) | Reason |
+| **Viewpoint balance** (policy) | Reason · Washington Examiner |
 
 Paywalled sources contribute their headline and preview, and those summaries are marked
 *partial*. Broad feeds pass through a free keyword filter so only AI stories reach the
 paid AI steps.
+
+## Bias safeguards
+
+- Validity labels go only on checkable facts; opinion pieces get none.
+- Only **independent** sources count: an outlet repeating another outlet's report counts once.
+- Credibility comes only from **track record on resolved claims**, never from reputation or lean.
+- Each news source's political lean is recorded from [AllSides Media Bias Ratings](https://www.allsides.com/media-bias)
+  for one purpose: **auditing Signality itself**. `python -m signality.bias` shows whether stories
+  from different leans get systematically different labels, week by week.
+
+Current mix (AllSides, Nov 2026): 7 Center, 1 Lean Left (AP), 1 Lean Right (Washington Examiner),
+2 unrated, plus 6 primary sources (the organizations themselves).
 
 ## Importance score
 

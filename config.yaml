@@ -140,8 +140,9 @@ ai_filter_keywords:
 # --- News sources (RSS feeds) ---
 # type:       primary = the organization the news is about (earns ✅ Confirmed)
 #             news = professional newsroom; specialist = AI-focused outlet
-# lean:       political lean for the bias audit. PLACEHOLDER estimates for now;
-#             replaced with ratings from a public bias-rating site in Stage 2b.
+# lean:       political lean, used ONLY for the bias audit (never for credibility).
+#             From AllSides Media Bias Ratings, checked 2026-11-09. n/a = the organization itself,
+#             not a news outlet. unrated = AllSides has no rating.
 # paywalled:  true = we only get headline + preview, so summaries are marked "partial"
 # ai_filter:  true = feed covers more than AI, so apply ai_filter_keywords first
 # via:        google_news = outlet has no public feed; we use a Google News search
@@ -196,7 +197,7 @@ sources:
     name: Reuters
     url: https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=site:reuters.com+(intitle:AI+OR+intitle:%22artificial+intelligence%22)+when:7d
     type: news
-    lean: center
+    lean: center   # AllSides: Center, high confidence
     paywalled: false
     ai_filter: false
     via: google_news
@@ -204,7 +205,7 @@ sources:
     name: Associated Press
     url: https://news.google.com/rss/search?hl=en-US&gl=US&ceid=US:en&q=site:apnews.com+(intitle:AI+OR+intitle:%22artificial+intelligence%22)+when:7d
     type: news
-    lean: lean-left
+    lean: lean-left   # AllSides: Lean Left
     paywalled: false
     ai_filter: false
     via: google_news
@@ -212,21 +213,21 @@ sources:
     name: Wall Street Journal (Tech)
     url: https://feeds.content.dowjones.io/public/rss/RSSWSJD
     type: news
-    lean: center
+    lean: center   # AllSides: Center (news section)
     paywalled: true
     ai_filter: true
   - id: bloomberg
     name: Bloomberg Technology
     url: https://feeds.bloomberg.com/technology/news.rss
     type: news
-    lean: lean-left
+    lean: center   # AllSides: Center (moved from Lean Left in v12)
     paywalled: true
     ai_filter: true
   - id: ft_ai
     name: Financial Times (AI)
     url: https://www.ft.com/artificial-intelligence?format=rss
     type: news
-    lean: center
+    lean: center   # AllSides: Center, low confidence
     paywalled: true
     ai_filter: false
 
@@ -235,36 +236,44 @@ sources:
     name: The Information
     url: https://www.theinformation.com/feed
     type: specialist
-    lean: unrated
+    lean: unrated   # AllSides: not yet rated
     paywalled: true
     ai_filter: true
   - id: mit_tech_review
     name: MIT Technology Review (AI)
     url: https://www.technologyreview.com/topic/artificial-intelligence/feed
     type: specialist
-    lean: unrated
+    lean: unrated   # no AllSides rating found
     paywalled: false
     ai_filter: false
   - id: arstechnica_ai
     name: Ars Technica (AI)
     url: https://arstechnica.com/ai/feed/
     type: specialist
-    lean: unrated
+    lean: center   # AllSides: Center, low confidence
     paywalled: false
     ai_filter: false
   - id: techcrunch_ai
     name: TechCrunch AI
     url: https://techcrunch.com/category/artificial-intelligence/feed/
     type: specialist
-    lean: unrated
+    lean: center   # AllSides: Center, low confidence
     paywalled: false
     ai_filter: false
 
   # Viewpoint balance (policy)
+  - id: washington_examiner
+    name: Washington Examiner (Technology)
+    url: https://www.washingtonexaminer.com/policy/technology/feed/
+    type: news
+    lean: lean-right   # AllSides: Lean Right; added Nov 2026 so policy coverage spans the spectrum
+    paywalled: false
+    ai_filter: true
+
   - id: reason
     name: Reason (Technology)
     url: https://reason.com/category/technology/feed/
     type: news
-    lean: lean-right
+    lean: center   # AllSides: Center since Sept 2024, notes a clear libertarian bias
     paywalled: false
     ai_filter: true

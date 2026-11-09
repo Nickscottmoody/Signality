@@ -6,7 +6,7 @@ import calendar
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import ai, db, validity
+from . import ai, bias, db, validity
 from .settings import load_config
 
 
@@ -64,6 +64,16 @@ def report(conn, cfg):
     ).fetchall())
     if labels:
         lines.append("  validity labels     " + "  ".join(f"{validity.LABELS[k].split()[0]} {v}" for k, v in labels.items()))
+    open_claims = one("SELECT COUNT(*) FROM claims WHERE status = 'open'")
+    lines.append(f"  claims              {one('SELECT COUNT(*) FROM claims')} extracted, {open_claims} open,"
+                 f" {one('SELECT COUNT(*) FROM claim_events WHERE event = ?', 'resolved')} resolved by evidence,"
+                 f" {one('SELECT COUNT(*) FROM claim_receipts')} receipts sent")
+    audit = bias.summarize(bias.rows(conn))["leans"]
+    if audit:
+        lines += ["", "Bias audit (share of ✅/🟢 labels by source lean; details: python -m signality.bias)"]
+        lines.append("  " + "  ".join(
+            f"{lean} {g['strong_pct']:.0f}% (n={g['n']}{'' if g['enough'] else ', too few'})"
+            for lean, g in sorted(audit.items(), key=lambda kv: bias.ORDER.index(kv[0]) if kv[0] in bias.ORDER else 99)))
     return "\n".join(lines)
 
 
