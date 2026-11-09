@@ -84,7 +84,10 @@ China recruited..."). Specific enough to check later.
 - kind: event (something that happened or is happening) | future (a plan, launch, or commitment by \
 the organization involved, e.g. "will ship in March") | performance (a claim about results or \
 capability: benchmarks, revenue, user numbers, "fastest", "best").
-- basis: what this claim rests on, using the SOURCING values above except not_applicable.
+- basis: what this claim rests on, using the SOURCING values above except not_applicable. Use \
+official_source only if the organization or document itself states the claim AS FACT. If an \
+organization only says it is investigating, reviewing, or responding to reports of something, the \
+claim rests on those reports, not on the organization.
 - claimant: who makes the claim and through whom, e.g. "Nvidia", "US intelligence memo, as reported \
 by the New York Times", "unnamed sources, per Bloomberg".
 - due_date: for future claims with a stated or clearly implied date, YYYY-MM-DD (use the last day \
@@ -95,6 +98,8 @@ it is not independently verified.
 (allegations, leaks, unconfirmed or anonymously sourced reports, plans and launch dates, \
 self-reported results). false for routine facts nobody disputes (market moves, what someone said \
 in public, official actions already taken).
+- same_as: if you are given claims Signality already tracks and this claim states the SAME checkable \
+thing as one of them (even worded differently), that claim's number; otherwise "none".
 Leave out analysts' and commentators' predictions and anything that is only an opinion.
 
 SAME EVENT
@@ -140,8 +145,10 @@ def schema(cfg):
                         "due_date": {"type": "string"},
                         "self_reported": {"type": "boolean"},
                         "in_doubt": {"type": "boolean"},
+                        "same_as": {"type": "string"},
                     },
-                    "required": ["text", "kind", "basis", "claimant", "due_date", "self_reported", "in_doubt"],
+                    "required": ["text", "kind", "basis", "claimant", "due_date", "self_reported", "in_doubt",
+                                 "same_as"],
                     "additionalProperties": False,
                 },
             },
@@ -189,7 +196,7 @@ def candidates(conn, story_id, words, cfg):
     return [(sid, title, source) for sid, (_, title, source) in best]
 
 
-def build_prompt(article, text, text_source, nearby):
+def build_prompt(article, text, text_source, nearby, known_claims=()):
     lines = [
         f"Today's date: {datetime.now(timezone.utc):%Y-%m-%d}",
         f"Source: {article['source_name']} (type: {article['source_type']})",
@@ -203,6 +210,8 @@ def build_prompt(article, text, text_source, nearby):
         "Recent stories Signality already has (possible same event):",
     ]
     lines += [f"  {sid}: {title} ({source})" for sid, title, source in nearby] or ["  none"]
+    lines += ["", "Claims Signality already tracks on this subject (use same_as if one repeats):"]
+    lines += [f"  Claim {c['id']}: {c['text']}" for c in known_claims] or ["  none"]
     return "\n".join(lines)
 
 
@@ -234,9 +243,10 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
         text = article["snippet"]
 
     nearby = candidates(conn, story_id, set(article["title_words"].split()), cfg) if purpose == "live" else []
+    known = claims.related_claims(conn, f"{article['title']} {text or ''}"[:2000]) if purpose == "live" else []
     data, cost = ai.ask_json(
         conn, cfg, task="triage" if purpose == "live" else f"triage_{purpose}", role=role, story_id=story_id,
-        system=SYSTEM, prompt=build_prompt(article, text, text_source, nearby), schema=schema(cfg),
+        system=SYSTEM, prompt=build_prompt(article, text, text_source, nearby, known), schema=schema(cfg),
     )
 
     same = data["same_event_as"].strip()
@@ -276,7 +286,7 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
         worth_tracking = data["ai_related"] and data["content_type"] != "opinion"
         row["claims"] = [] if already or not worth_tracking else claims.record(
             conn, story_id, article["id"], data["claims"][:4], label["independent_outlets"],
-            article["source_name"])
+            article["source_name"], known_ids=[c["id"] for c in known])
     return {**row, "source": article["source_name"], "original_title": article["title"]}
 
 
@@ -335,7 +345,8 @@ def show(result):
         print(f"  {f:<8}{result[f]}  {result[f + '_reason']}")
     for c in result.get("claims", []):
         due = f" (due {c['due_date']})" if c["due_date"] else ""
-        print(f"  CLAIM [{claims.LABELS[c['label']]} · {claims.STATUSES[c['status']]}{due}] {c['text']}")
+        status = "repeat of an existing claim" if c["status"] == "repeat" else claims.STATUSES[c["status"]]
+        print(f"  CLAIM [{claims.LABELS[c['label']]} · {status}{due}] {c['text']}")
         print(f"        why: {c['reason']}")
 
 

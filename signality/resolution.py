@@ -11,13 +11,6 @@ Every change is written to claim_events with the evidence and who decided.
 from datetime import datetime, timedelta, timezone
 
 from . import ai, claims, db
-from .dedup import key_words
-
-# Attribution words appear in many claims ("according to the New York Times...")
-# and say nothing about the subject, so they don't count toward a match.
-ATTRIBUTION = {"according", "reports", "reported", "report", "says", "said", "york", "times", "bloomberg",
-               "reuters", "information", "journal", "street", "wall", "financial", "unnamed", "sources",
-               "people", "familiar", "matter", "memo", "told"}
 
 MATCH_SYSTEM = """You help Signality, an AI-news agent, track claims until they're proven. You get \
 ONE new news item and a few OPEN claims Signality is tracking. For each claim, say what the new item \
@@ -101,9 +94,7 @@ SETTLING = {"confirms", "contradicts", "walked_back", "delayed", "did_not_happen
 UPGRADABLE = {"reported", "unverified"}
 
 
-def subject_words(text, claimant=""):
-    """The words that say what a claim is ABOUT (not who reported it)."""
-    return key_words(text) - ATTRIBUTION - key_words(claimant or "")
+subject_words = claims.subject_words
 
 
 def candidates(conn, cfg, article):

@@ -65,7 +65,7 @@ def report(conn, cfg):
     if labels:
         lines.append("  validity labels     " + "  ".join(f"{validity.LABELS[k].split()[0]} {v}" for k, v in labels.items()))
     open_claims = one("SELECT COUNT(*) FROM claims WHERE status = 'open'")
-    lines.append(f"  claims              {one('SELECT COUNT(*) FROM claims')} extracted, {open_claims} open,"
+    lines.append(f"  claims              {one('SELECT COUNT(*) FROM claims WHERE status != ?', 'duplicate')} unique, {open_claims} open,"
                  f" {one('SELECT COUNT(*) FROM claim_events WHERE event = ?', 'resolved')} resolved by evidence,"
                  f" {one('SELECT COUNT(*) FROM claim_receipts')} receipts sent")
     audit = bias.summarize(bias.rows(conn))["leans"]

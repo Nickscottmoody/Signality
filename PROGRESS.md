@@ -97,8 +97,23 @@ Sonnet; Opus not worth it.** Caveats: small sample; real pool was thin (claims o
 `python -m signality.compare_claims` (delete data/reports/claim-cases.json first) after a few weeks of
 real resolutions. Report: data/reports/claims-haiku-sonnet-opus-2026-11-09.html.
 
-Next up: **fix duplicate claims across a saga (same claim saved once per story → would send duplicate
-receipts), then close out Stage 2b.** Still to confirm: Nov 10 8am digest + first full day's cost.
+**Duplicate claims fixed.** The same claim was being saved once per story (e.g. 6 wordings of "Alice Huang
+was recruited by China's spy agency"), which would have sent duplicate receipts.
+- Going forward: Haiku's triage call sees up to 12 claims already tracked on the subject and marks a
+  repeat with `same_as`; the existing claim gets a `repeated` "also reported in …" event instead of a
+  copy (test: 2 of 3 repeats linked; the miss was a claim not in the list, hence 8 → 12).
+- Cleanup: `claims.merge_existing_duplicates()` (Haiku groups same-meaning claims per subject) + one
+  manual merge (decided_by `review`) of three "Nvidia opened an investigation" claims Haiku kept apart.
+  51 → 37 unique claims. Copies kept with status `duplicate` + `duplicate_of` (migration 10). Merges
+  never create receipts.
+- Accuracy fix: claim #58 "Huang was the target of a foreign intelligence effort" had been ✅ Confirmed
+  "by Nvidia", but Nvidia only said it was investigating REPORTS of it. Corrected to 🟡 open (event
+  decided_by `review`), and the extraction rule now says official_source only when the organization
+  states the claim as fact, not when it says it's investigating reports.
+57 tests passing.
+
+Next up: **restart so the duplicate fix is live, then close out Stage 2b.** Still to confirm: Nov 10
+8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -238,8 +253,8 @@ receipts), then close out Stage 2b.** Still to confirm: Nov 10 8am digest + firs
 - **Alerts only for news first seen in the last 12h** (`delivery.max_age_hours`). The Nvidia probe story
   (77) was 13h old at switch-on, so it correctly went to the digest instead of alerting.
 - **Code changes need a service restart** (`scripts/install_mac_service.sh`); config changes don't.
-- **⚠️ Duplicate claims within a saga:** "Alice Huang was recruited…" exists as 3 claims from 3 stories.
-  If it resolves, Nicholas would get 3 receipts. Fix before closing Stage 2b.
+- **Claim de-duplication is model-judged and not perfect:** Haiku sometimes keeps same-meaning claims
+  apart (or groups a loose fit). Re-run `claims.merge_existing_duplicates()` occasionally; spot-check.
 - **Siggy image choice:** 🚨 alerts get red Siggy; digest + notices get the yellow logo; 🔔 silent
   messages are text-only by default to keep the chat readable (`delivery.image_on_silent`).
   Brief says "logo for normal messages" — confirm with Nicholas.

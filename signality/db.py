@@ -243,6 +243,11 @@ MIGRATIONS = [
     """
     ALTER TABLE claim_events ADD COLUMN detail TEXT;
     """,
+    # 10 - Stage 2b: the same claim reported by several stories is tracked ONCE.
+    #      Copies are kept (never deleted) with status 'duplicate' pointing at the original.
+    """
+    ALTER TABLE claims ADD COLUMN duplicate_of INTEGER REFERENCES claims(id);
+    """,
 ]
 
 
