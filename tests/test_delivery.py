@@ -68,3 +68,8 @@ def test_digest_item_shows_related_count():
     c = card()
     c.related_ids = [5, 6, 7]
     assert "➕ 3 related stories on this" in telegram.render_digest_item(1, c)
+
+
+def test_alert_note_is_separated_from_links_by_a_blank_line():
+    body = telegram.render_card(card(), "alert", note="Why this is an alert: big news.")
+    assert "</a>\n\n<i>Why this is an alert" in body

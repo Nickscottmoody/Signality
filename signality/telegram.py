@@ -108,7 +108,7 @@ def render_card(card, kind, note=""):
                  f" · Urgency {f['urgency']} · Novelty {f['novelty']}")
     lines.append(f"🔗 {_links(card.sources)}")
     if note:
-        lines.append(f"<i>{_e(note)}</i>")
+        lines += ["", f"<i>{_e(note)}</i>"]  # blank line keeps it apart from the source links
     return "\n".join(lines)
 
 
