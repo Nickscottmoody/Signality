@@ -40,8 +40,10 @@ waits for the old copy to stop (first attempt failed with "Bootstrap failed: 5")
 Digest window changed from a fixed 24h to "since the last digest, max 48h" so skipped days (like
 today) and days the Mac was off don't drop stories. Restarted again 13:39 CT on this code; clean.
 
-**Stage 2a — built and live.** Not yet observed: the first real digest (Nov 10, 8am CT) and a full
-day of costs.
+**Stage 2a — built and live.** ✅ First real 🚨 alert delivered Nov 9, 1:55pm CT ("Nvidia CEO Jensen
+Huang admits infidelity amid probe…", 69, 🟢 Likely); Nicholas confirmed it arrived. Sonnet declined
+the other candidate ("OpenAI and Anthropic valuations fall", 70) for thin, preview-only sourcing.
+Not yet observed: the first real digest (Nov 10, 8am CT) and a full day of costs.
 
 Next up: **confirm the Nov 10 digest arrived and looked right; check `signality.status` for the first
 full day's cost; then start Stage 2b (claim extraction + receipts).**
@@ -129,6 +131,7 @@ full day's cost; then start Stage 2b (claim extraction + receipts).**
 - [x] Stage 2a step 5 (part 2): bonus ×1.1; 🔔 folded into digest (route() sends 50-74 to digest when
       `delivery.silent_messages` is false; declined/over-cap alerts also wait for the digest). 32 tests.
 - [x] Stage 2a step 6: switched on Nov 9; backlog scored; service restarted on new code; status command.
+- [x] First real alert end-to-end (Nov 9, 1:55pm CT): fetch → Haiku → Sonnet gate → Telegram
 - [ ] Confirm first real digest (Nov 10 8am) + first full day's cost
 
 ## Open issues
