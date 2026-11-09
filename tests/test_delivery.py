@@ -73,3 +73,36 @@ def test_digest_item_shows_related_count():
 def test_alert_note_is_separated_from_links_by_a_blank_line():
     body = telegram.render_card(card(), "alert", note="Why this is an alert: big news.")
     assert "</a>\n\n<i>Why this is an alert" in body
+
+
+def receipt():
+    from signality.messages import ReceiptCard
+    return ReceiptCard(event_id=9, claim_id=3, claim="Jensen Huang had a <relationship> with Alice Huang",
+                       claimant="US memo, as reported by the FT", first_label="reported", first_date="2026-11-07",
+                       first_source=("FT", "https://ft.com/a"), outcome="confirmed", outcome_date="2026-11-08",
+                       reason="Nvidia's board published Huang's apology naming her.",
+                       evidence_source=("TechCrunch", "https://tc.com/b"), story_headline="Nvidia memo")
+
+
+def test_receipt_shows_before_after_and_both_links():
+    body = telegram.render_receipt(receipt())
+    assert "🧾 <b>Receipt · ✅ Confirmed</b>" in body
+    assert "&lt;relationship&gt;" in body
+    assert "<b>Nov 7:</b> 🟡 Reported, claimed by US memo, as reported by the FT" in body
+    assert "<b>Nov 8:</b> ✅ Confirmed." in body
+    assert "original (FT)" in body and "evidence (TechCrunch)" in body
+
+
+def test_digest_carries_receipts_section():
+    from signality.messages import Message
+    m = Message(kind="digest", silent=True, title="Morning digest", text="1 receipt.", cards=[card()], receipts=[receipt()])
+    text, _, _ = telegram.fit_digest(m)
+    assert "🧾 <b>Receipts: claims that resolved</b>" in text and "✅ Confirmed:</b>" in text
+
+
+def test_long_reason_is_cut_to_whole_sentences():
+    r = receipt()
+    r.reason = "First sentence is here. " * 30
+    body = telegram.render_receipt(r)
+    line = next(l for l in body.split("\n") if l.startswith("<b>Nov 8"))
+    assert len(line) < 360 and line.rstrip().endswith(".")

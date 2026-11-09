@@ -227,6 +227,22 @@ MIGRATIONS = [
     );
     CREATE INDEX idx_claim_events_claim ON claim_events(claim_id, id);
     """,
+    # 8 - Stage 2b: which 🧾 receipts reached whom (one row per resolution per recipient).
+    """
+    CREATE TABLE claim_receipts (
+        id                  INTEGER PRIMARY KEY,
+        claim_event_id      INTEGER NOT NULL REFERENCES claim_events(id),
+        recipient           TEXT NOT NULL,      -- platform + account, e.g. 'telegram:123'
+        via                 TEXT NOT NULL,      -- live | digest
+        sent_at             TEXT NOT NULL,
+        channel_message_id  TEXT,
+        UNIQUE (claim_event_id, recipient)
+    );
+    """,
+    # 9 - Stage 2b: keep the model's full reasoning apart from the one-line reason shown on receipts
+    """
+    ALTER TABLE claim_events ADD COLUMN detail TEXT;
+    """,
 ]
 
 

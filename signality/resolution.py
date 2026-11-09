@@ -78,7 +78,12 @@ decision (choose one):
 Be strict. Confirm only on solid evidence: an official statement or document, the event plainly \
 occurring, an admission, or independent verification. A denial by an interested party makes a claim \
 disputed, not walked back, unless the original claimant retracts. Thin previews usually mean no_change.
-Never present a prediction as settled. If unsure, choose no_change."""
+Never present a prediction as settled. If unsure, choose no_change.
+
+reason: your full reasoning, specific and checkable.
+receipt_line: ONE plain sentence (at most about 30 words) the reader sees on their receipt, naming \
+the evidence (e.g., "Nvidia's board published Huang's apology naming Alice Huang, confirming the \
+relationship.")."""
 
 DECIDE_SCHEMA = {
     "type": "object",
@@ -86,8 +91,9 @@ DECIDE_SCHEMA = {
         "reason": {"type": "string"},
         "decision": {"type": "string", "enum": [
             "confirmed", "walked_back", "delayed", "never_happened", "disputed", "no_change"]},
+        "receipt_line": {"type": "string"},
     },
-    "required": ["reason", "decision"],
+    "required": ["reason", "decision", "receipt_line"],
     "additionalProperties": False,
 }
 
@@ -123,12 +129,12 @@ def candidates(conn, cfg, article):
     return [c for _, c in scored[: cfg["claims"]["candidates_per_article"]]]
 
 
-def _event(conn, claim_id, event, label, status, reason, article_id, decided_by):
+def _event(conn, claim_id, event, label, status, reason, article_id, decided_by, detail=None):
     now = db.utcnow()
     conn.execute(
-        "INSERT INTO claim_events (claim_id, at, event, label, status, reason, evidence_article_id, decided_by)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (claim_id, now, event, label, status, reason, article_id, decided_by),
+        "INSERT INTO claim_events (claim_id, at, event, label, status, reason, evidence_article_id, decided_by, detail)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (claim_id, now, event, label, status, reason, article_id, decided_by, detail),
     )
     resolved = status not in ("open", "not_tracked")
     conn.execute(
@@ -207,13 +213,14 @@ def check_article(conn, cfg, article, budget):
             outcome = apply_decision(c, verdict["decision"])
             if outcome is None:  # still worth showing: the claim was checked against this evidence
                 _event(conn, c["id"], "checked", c["label"], c["status"],
-                       f"Checked against {article['source_name']}, no change: {verdict['reason']}",
-                       article["id"], cfg["models"]["high_stakes"])
+                       f"Checked against {article['source_name']}, no change: {verdict['receipt_line']}",
+                       article["id"], cfg["models"]["high_stakes"], detail=verdict["reason"])
             if outcome:
                 label, status = outcome
                 event = "resolved" if status != "open" else "label_change"
-                _event(conn, c["id"], event, label, status, verdict["reason"], article["id"], cfg["models"]["high_stakes"])
-                changes.append({"claim": c["text"], "change": f"{status} / {label}", "reason": verdict["reason"],
+                _event(conn, c["id"], event, label, status, verdict["receipt_line"], article["id"],
+                       cfg["models"]["high_stakes"], detail=verdict["reason"])
+                changes.append({"claim": c["text"], "change": f"{status} / {label}", "reason": verdict["receipt_line"],
                                 "claim_id": c["id"]})
     return changes
 

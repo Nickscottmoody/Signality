@@ -12,7 +12,7 @@ import re
 
 import requests
 
-from . import db
+from . import claims, db
 from .settings import ROOT, load_config, secret
 
 API = "https://api.telegram.org/bot{token}/{method}"
@@ -126,6 +126,49 @@ def render_unconfirmed_item(card):
             f"{card.label_text}: {_e(card.label_reason)} · {_links(card.sources, 2)}")
 
 
+def _day(iso_date):
+    """'2026-11-07' -> 'Nov 7'."""
+    from datetime import date
+    d = date.fromisoformat(iso_date[:10])
+    return f"{d:%b} {d.day}"
+
+
+def _receipt_links(r):
+    links = [f'<a href="{html.escape(r.first_source[1])}">original ({_e(r.first_source[0])})</a>']
+    if r.evidence_source[1]:
+        links.append(f'<a href="{html.escape(r.evidence_source[1])}">evidence ({_e(r.evidence_source[0])})</a>')
+    return " · ".join(links)
+
+
+def _short(text, max_chars=280):
+    """The first sentence or two, so an older long explanation still fits a receipt."""
+    if len(text) <= max_chars:
+        return text
+    out = ""
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        if out and len(out) + len(sentence) > max_chars:
+            break
+        out = f"{out} {sentence}".strip()
+    return out if len(out) <= max_chars else out[: max_chars - 1].rstrip() + "…"
+
+
+def render_receipt(r, compact=False):
+    """A resolved claim: what was claimed, by whom, when, and how it turned out."""
+    outcome = claims.STATUSES[r.outcome]
+    reason = _short(r.reason)
+    if compact:  # one item in the digest
+        return (f"🧾 <b>{outcome}:</b> “{_e(r.claim)}”\n{_e(reason)}\n🔗 {_receipt_links(r)}")
+    return "\n".join([
+        f"🧾 <b>Receipt · {outcome}</b>",
+        f"“{_e(r.claim)}”",
+        "",
+        f"<b>{_day(r.first_date)}:</b> {claims.LABELS[r.first_label]}, claimed by {_e(r.claimant or r.first_source[0])}",
+        f"<b>{_day(r.outcome_date)}:</b> {outcome}. {_e(reason)}",
+        "",
+        f"🔗 {_receipt_links(r)}",
+    ])
+
+
 def fit_digest(message, limit=TEXT_LIMIT):
     """The digest as ONE message: drop the lowest-ranked stories until it fits.
 
@@ -136,6 +179,9 @@ def fit_digest(message, limit=TEXT_LIMIT):
         dropped = (len(message.cards) - len(cards)) + (len(message.unconfirmed) - len(unconfirmed))
         blocks = [f"<b>{_e(message.title)}</b>\n{_e(message.text)}"]
         blocks += [render_digest_item(i, c) for i, c in enumerate(cards, 1)]
+        if message.receipts:
+            blocks.append("🧾 <b>Receipts: claims that resolved</b>")
+            blocks += [render_receipt(r, compact=True) for r in message.receipts]
         if unconfirmed:
             blocks.append("⚠️ <b>Unconfirmed: read with care</b>")
             blocks += [render_unconfirmed_item(c) for c in unconfirmed]
@@ -173,7 +219,13 @@ def deliver(message, cfg, chat_id=None):
         text, cards, unconfirmed = fit_digest(message)
         result = send_message(text, chat_id, silent=True, image_url=image_urls.get("normal"))
         included = [c.story_id for c in cards + unconfirmed] + [i for c in cards + unconfirmed for i in c.related_ids]
-        return {"message_id": result["message_id"], "story_ids": included}
+        return {"message_id": result["message_id"], "story_ids": included,
+                "receipt_event_ids": [r.event_id for r in message.receipts]}
+
+    if message.kind == "receipt":
+        result = with_image(render_receipt(message.receipts[0]), "normal", message.silent)
+        return {"message_id": result["message_id"], "story_ids": [],
+                "receipt_event_ids": [message.receipts[0].event_id]}
 
     body = f"<b>{_e(message.title)}</b>\n{_e(message.text)}" if message.title else _e(message.text)
     result = with_image(body, message.image, message.silent)

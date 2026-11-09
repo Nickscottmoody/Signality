@@ -66,8 +66,16 @@ Backfill over Nov 7-9 (152 articles, 62 checks, $0.016): the Huang/Alice Huang r
 🟡 → 🟢 (Bloomberg) → ✅ (Nvidia board message naming her, via TechCrunch); the spy-recruitment claim went
 🟡 → 🟢 and stays open. Sonnet correctly refused to confirm from an article that didn't name her.
 
-Next up: **2b Step 3 — 🧾 receipt messages** (then restart to make Steps 1-3 live). Still to confirm:
-Nov 10 8am digest + first full day's cost.
+**Stage 2b, Step 3 — done (code), not yet live.** 🧾 Receipts (`receipts.py`, migration 8
+`claim_receipts`, migration 9 `claim_events.detail`). Nicholas's choice: receipts go in a 🧾 section of the
+8am digest; a claim from a saga he got a 🚨 about gets its receipt right away (silent, yellow Siggy).
+Receipt = claim (quoted) · first date + label + claimant · outcome date + one-line reason · links to the
+original and the evidence. Sonnet now returns a one-sentence `receipt_line` for the reader plus its full
+reasoning (stored in `detail`). One receipt pending (Huang/Alice Huang relationship ✅) → will go out
+live after the restart, since the Nvidia saga alerted.
+
+Next up: **restart to make 2b Steps 1-3 live; confirm the live receipt arrives; then 2b Step 4 — bias
+ratings + skew metric.** Still to confirm: Nov 10 8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

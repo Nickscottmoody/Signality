@@ -33,13 +33,31 @@ class StoryCard:
 
 
 @dataclass
+class ReceiptCard:
+    """A resolved claim: what was claimed, what turned out to be true, and the evidence."""
+    event_id: int
+    claim_id: int
+    claim: str
+    claimant: str
+    first_label: str         # claims.LABELS key when it was first reported
+    first_date: str          # YYYY-MM-DD
+    first_source: tuple      # (outlet name, url)
+    outcome: str             # claims.STATUSES key: confirmed | walked_back | delayed | never_happened
+    outcome_date: str
+    reason: str
+    evidence_source: tuple   # (outlet name, url)
+    story_headline: str      # the story the claim came from (used to spot related alerts)
+
+
+@dataclass
 class Message:
-    kind: str                       # alert | silent | digest | notice
+    kind: str                       # alert | silent | digest | notice | receipt
     silent: bool                    # deliver without sound
     image: str | None = None        # key into config siggy.images: alert | normal | thinking
     title: str = ""
     cards: list = field(default_factory=list)
     unconfirmed: list = field(default_factory=list)  # digest only: 🟠/🔴 stories, shown apart
+    receipts: list = field(default_factory=list)     # 🧾 ReceiptCards
     text: str = ""                  # body for notices
     note: str = ""                  # small extra line, e.g. why an alert was sent quietly
 

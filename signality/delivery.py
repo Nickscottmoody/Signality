@@ -15,7 +15,7 @@ Safety rules from the brief:
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import ai, alert_check, db, messages, scoring, telegram, validity
+from . import ai, alert_check, db, messages, receipts, scoring, telegram, validity
 from .dedup import key_words, related
 from .settings import secret
 
@@ -150,6 +150,32 @@ def digest_since(conn, cfg):
     return max(earliest, last) if last else earliest
 
 
+def _alerted_headlines(conn, days=30):
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds")
+    return [(r[0], r[1]) for r in conn.execute(
+        "SELECT d.story_id, t.headline FROM deliveries d JOIN story_triage t ON t.story_id = d.story_id"
+        " AND t.purpose = 'live' WHERE d.kind = 'alert' AND d.recipient = ? AND d.sent_at >= ?",
+        (recipient(), since),
+    )]
+
+
+def send_live_receipts(conn, cfg):
+    """Receipts for claims from a saga you got a 🚨 about go out right away. Returns how many."""
+    alerted = _alerted_headlines(conn)
+    if not alerted:
+        return 0
+    sent = 0
+    for event_id in receipts.pending(conn, recipient()):
+        r = receipts.card(conn, event_id)
+        story_id = conn.execute("SELECT story_id FROM claims WHERE id = ?", (r.claim_id,)).fetchone()[0]
+        words = key_words(r.story_headline or r.claim)
+        if any(sid == story_id or related(words, key_words(h)) for sid, h in alerted):
+            result = telegram.deliver(messages.Message(kind="receipt", silent=True, receipts=[r]), cfg)
+            receipts.mark_sent(conn, [event_id], recipient(), "live", result["message_id"])
+            sent += 1
+    return sent
+
+
 def build_digest(conn, cfg):
     """The morning digest: undelivered stories since the last digest, best first."""
     since = digest_since(conn, cfg)
@@ -177,9 +203,12 @@ def build_digest(conn, cfg):
     today = local_now(cfg)
     text = (f"{len(confirmed)} stories worth knowing, highest first."
             + (f" Plus {len(unconfirmed)} unconfirmed, labeled at the end." if unconfirmed else ""))
+    pending_receipts = [receipts.card(conn, e) for e in receipts.pending(conn, recipient())]
+    if pending_receipts:
+        text += f" {len(pending_receipts)} 🧾 receipt{'s' if len(pending_receipts) != 1 else ''}."
     return messages.Message(kind="digest", silent=True, image="normal",
                             title=f"📰 Morning digest · {today:%a, %b} {today.day}", text=text,
-                            cards=confirmed, unconfirmed=unconfirmed)
+                            cards=confirmed, unconfirmed=unconfirmed, receipts=pending_receipts)
 
 
 def maybe_send_digest(conn, cfg):
@@ -190,9 +219,10 @@ def maybe_send_digest(conn, cfg):
         return 0
     message = build_digest(conn, cfg)
     included = []
-    if message.cards or message.unconfirmed:
+    if message.cards or message.unconfirmed or message.receipts:
         sent = telegram.deliver(message, cfg)
         included = sent["story_ids"]  # only the stories that fit in the one message
+        receipts.mark_sent(conn, sent["receipt_event_ids"], recipient(), "digest", sent["message_id"])
         for story_id in included:
             conn.execute(
                 "INSERT INTO deliveries (story_id, recipient, kind, sent_at, local_date, channel_message_id)"
@@ -233,5 +263,6 @@ def run(conn, cfg):
     """One delivery round: budget notices, immediate messages, then the digest if it's time."""
     notice = budget_notices(conn, cfg)
     sent = send_immediate(conn, cfg)
+    live_receipts = send_live_receipts(conn, cfg)
     digest = maybe_send_digest(conn, cfg)
-    return {**sent, "digest_items": digest, "budget_notice": notice}
+    return {**sent, "receipts": live_receipts, "digest_items": digest, "budget_notice": notice}
