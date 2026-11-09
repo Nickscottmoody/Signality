@@ -97,7 +97,7 @@ digest:
   send_hour: 8                # hour of day (24-hour clock) to send the digest
   timezone: America/Chicago   # your clock: digest hour and "per day" alert cap use it (Central time)
   max_items: 15               # most stories in one digest (the highest-scoring ones)
-  lookback_hours: 24          # stories first seen in this window are eligible for the digest
+  max_lookback_hours: 48      # a digest covers everything since the last digest, but never more than this
 
 # --- Delivery: what gets sent to your phone ---
 delivery:

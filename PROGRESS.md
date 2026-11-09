@@ -35,9 +35,12 @@ folded into the digest** (`delivery.silent_messages: false`). Phone gets only th
 **Stage 2a, Step 6 — in progress.** `triage.enabled` and `delivery.enabled` are **true**. Backlog: 138
 recent stories scored once by hand ($0.056; 28 reworded duplicates merged), 617 older marked too_old.
 Today's (Nov 9) digest skipped on purpose (switched on after 8am) → first real digest Nov 10, 8am CT.
-Waiting on Nicholas to restart the service so it runs the new code.
+Service restarted on new code (13:38 CT; first round logged `triage:`). Install script fixed: it now
+waits for the old copy to stop (first attempt failed with "Bootstrap failed: 5").
+Digest window changed from a fixed 24h to "since the last digest, max 48h" so skipped days (like
+today) and days the Mac was off don't drop stories. Needs one more restart to load that change.
 
-Next up: **restart service, verify triage + delivery rounds in the log, watch first day's cost.**
+Next up: **restart once more, then confirm the Nov 10 8am digest arrives and check first-day cost.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -171,6 +174,9 @@ Next up: **restart service, verify triage + delivery rounds in the log, watch fi
   produced 30+ distinct articles that are NOT the "same event". Digest now folds stories whose Haiku
   headlines share ≥2 distinctive words (`dedup.related`) under the top one ("➕ N related"), and a
   saga that already triggered a 🚨 in the last 24h can't alert again. Real threading/updates = Stage 3b.
+- **Alerts only for news first seen in the last 12h** (`delivery.max_age_hours`). The Nvidia probe story
+  (77) was 13h old at switch-on, so it correctly went to the digest instead of alerting.
+- **Code changes need a service restart** (`scripts/install_mac_service.sh`); config changes don't.
 - **Siggy image choice:** 🚨 alerts get red Siggy; digest + notices get the yellow logo; 🔔 silent
   messages are text-only by default to keep the chat readable (`delivery.image_on_silent`).
   Brief says "logo for normal messages" — confirm with Nicholas.

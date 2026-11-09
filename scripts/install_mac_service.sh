@@ -33,8 +33,13 @@ cat > "$PLIST" << PLIST
 </plist>
 PLIST
 
-# Restart cleanly if it was already installed.
+# Restart cleanly if it was already installed. Stopping takes macOS a moment,
+# so wait (up to 10 seconds) until the old copy is fully gone before starting.
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+for _ in $(seq 1 20); do
+    launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1 || break
+    sleep 0.5
+done
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 
 echo "Signality is now running in the background."

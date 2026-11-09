@@ -137,9 +137,22 @@ def send_immediate(conn, cfg):
     return sent
 
 
+def digest_since(conn, cfg):
+    """Start of the digest window: the previous digest, or at most max_lookback_hours ago.
+
+    Covering "since the last digest" means nothing slips through after a skipped day
+    or a day the computer was off.
+    """
+    earliest = (datetime.now(timezone.utc) - timedelta(hours=cfg["digest"]["max_lookback_hours"])).isoformat(timespec="seconds")
+    last = conn.execute(
+        "SELECT MAX(sent_at) FROM deliveries WHERE kind = 'digest' AND recipient = ?", (recipient(),)
+    ).fetchone()[0]
+    return max(earliest, last) if last else earliest
+
+
 def build_digest(conn, cfg):
-    """The morning digest: undelivered stories from the lookback window, best first."""
-    since = (datetime.now(timezone.utc) - timedelta(hours=cfg["digest"]["lookback_hours"])).isoformat(timespec="seconds")
+    """The morning digest: undelivered stories since the last digest, best first."""
+    since = digest_since(conn, cfg)
     rows = conn.execute(
         """
         SELECT t.story_id, t.importance FROM story_triage t JOIN stories s ON s.id = t.story_id
