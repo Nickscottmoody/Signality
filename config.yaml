@@ -45,6 +45,14 @@ triage:
   fetch_full_text: true       # read the full article page when it's free to read (better summaries)
   dedup_candidates: 8         # how many similar recent headlines Haiku checks for "same event"
 
+# --- Claims: matching new evidence to open claims (the receipts system) ---
+claims:
+  resolve_enabled: true       # check new articles against open claims every round
+  match_window_days: 120      # open claims older than this stop being checked automatically
+  max_haiku_checks_per_round: 20   # cap on cheap first-pass checks per round (controls cost)
+  max_sonnet_checks_per_round: 5   # cap on careful final decisions per round (controls cost)
+  candidates_per_article: 5   # most open claims compared with one new article
+
 # --- Topics Signality watches, and how much to favor each ---
 topics:
   model_releases: 1.0         # new AI models and major updates

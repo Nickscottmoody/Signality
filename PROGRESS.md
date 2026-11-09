@@ -53,8 +53,21 @@ says every Reported claim stays open; this narrows it to claims that could turn 
 Test on 18 stories: 19 claims, 9 open (e.g. NYT memo "China recruited Alice Huang" 🟡 open;
 Anthropic "Fable 5.2 30% faster" 🏷️ open; Meta $60B program due 2027-03-31). ~$0.0006/story.
 
-Next up: **restart service so claims start accumulating; then 2b Step 2 — match new evidence to open
-claims and let Sonnet resolve them.** Still to confirm: Nov 10 8am digest + first full day's cost.
+Claims are now written as plain checkable statements with the claimant kept separate ("Jensen Huang had a
+romantic relationship with Alice Huang" — claimed by "US intelligence memo, as reported by the FT"). The
+old "the memo alleged…" phrasing made Haiku flip-flop (50/50); the new phrasing gave 4/4 consistent.
+
+**Stage 2b, Step 2 — done (code), not yet live.** `resolution.py` checks each new article against open
+claims: free keyword match → Haiku first pass (`claim_match`) → Sonnet final call (`claim_resolve`) only
+when Haiku thinks it may settle a claim. New independent outlet supporting 🟡/🟠 → 🟢 by rule. Sonnet's
+"no change" is recorded too (`checked` events). Progress cursor = article id (`claims_checked_through_id`).
+Caps per round in config (`claims.*`). Bug fixed: Haiku returns "Claim 24", code expected "24".
+Backfill over Nov 7-9 (152 articles, 62 checks, $0.016): the Huang/Alice Huang relationship claim went
+🟡 → 🟢 (Bloomberg) → ✅ (Nvidia board message naming her, via TechCrunch); the spy-recruitment claim went
+🟡 → 🟢 and stays open. Sonnet correctly refused to confirm from an article that didn't name her.
+
+Next up: **2b Step 3 — 🧾 receipt messages** (then restart to make Steps 1-3 live). Still to confirm:
+Nov 10 8am digest + first full day's cost.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

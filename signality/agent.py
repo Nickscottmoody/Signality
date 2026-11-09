@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, db, delivery, fetcher, triage, validity
+from . import ai, db, delivery, fetcher, resolution, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -68,6 +68,20 @@ def one_round():
         log.warning("triage skipped: %s", e)
     except Exception:
         log.exception("triage round crashed; will try again next round")
+
+    if cfg["claims"]["resolve_enabled"]:
+        try:
+            conn = db.connect(cfg["storage"]["db_path"])
+            r = resolution.run(conn, cfg)
+            conn.close()
+            log.info("claims: %d new articles, %d compared with open claims, %d claim changes",
+                     r["articles"], r["checked"], len(r["changes"]))
+            for change in r["changes"]:
+                log.info("  claim -> %s: %s", change["change"], change["claim"][:90])
+        except ai.BudgetExceeded as e:
+            log.warning("claim checks skipped: %s", e)
+        except Exception:
+            log.exception("claim round crashed; will try again next round")
 
     if not cfg["delivery"]["enabled"]:
         return

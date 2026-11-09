@@ -218,7 +218,7 @@ MIGRATIONS = [
         id                  INTEGER PRIMARY KEY,
         claim_id            INTEGER NOT NULL REFERENCES claims(id),
         at                  TEXT NOT NULL,
-        event               TEXT NOT NULL,  -- created | label_change | resolved
+        event               TEXT NOT NULL,  -- created | label_change | resolved | checked
         label               TEXT NOT NULL,
         status              TEXT NOT NULL,
         reason              TEXT NOT NULL,  -- the evidence, in words

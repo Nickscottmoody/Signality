@@ -78,13 +78,15 @@ or market news that names AI once). Still fill in every other field.
 CLAIMS
 List up to 4 of the story's most important checkable factual claims, as separate items. Return an \
 empty list for opinion pieces or when nothing is checkable.
-- text: one sentence attributed to whoever makes the claim ("Nvidia says...", "According to people \
-familiar with the matter...", "Bloomberg reports..."). Specific enough to check later.
+- text: the claim itself as one plain statement that will turn out true or false, WITHOUT the \
+attribution (write "China recruited Alice Huang to spy on Jensen Huang", not "According to a memo, \
+China recruited..."). Specific enough to check later.
 - kind: event (something that happened or is happening) | future (a plan, launch, or commitment by \
 the organization involved, e.g. "will ship in March") | performance (a claim about results or \
 capability: benchmarks, revenue, user numbers, "fastest", "best").
 - basis: what this claim rests on, using the SOURCING values above except not_applicable.
-- claimant: who makes the claim (an organization, official, outlet, or "unnamed sources").
+- claimant: who makes the claim and through whom, e.g. "Nvidia", "US intelligence memo, as reported \
+by the New York Times", "unnamed sources, per Bloomberg".
 - due_date: for future claims with a stated or clearly implied date, YYYY-MM-DD (use the last day \
 of a stated month or quarter); otherwise an empty string.
 - self_reported: true if an organization makes the claim about its own performance or results and \

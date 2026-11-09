@@ -68,7 +68,7 @@ def _label(claim, independent_outlets, read_from, who):
     if claim["basis"] == "anonymous_sources":
         return "reported", "open", "One outlet so far, citing unnamed sources."
     if claim["basis"] == "repeats_other_outlet" and not cites_itself:
-        return "reported", "open", f"Relayed from {who}'s report; counts as one source."
+        return "reported", "open", f"Relayed reporting ({who}); counts as one source."
     return "reported", "open", "One outlet so far."
 
 
