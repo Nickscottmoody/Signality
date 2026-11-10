@@ -34,6 +34,7 @@ bottom of "Current state"). First thing to ask Nicholas: did the first 8am diges
 - Receipts: in the digest; **live** if the claim's saga got a 🚨. Only claims genuinely in doubt are tracked;
   claim text is a plain fact, claimant kept separate; one record per claim (`same_as`).
 - Sources: **17** (Washington Examiner added for balance); lean from AllSides (checked 2026-11-09).
+- "🎯 How it affects you": **strict bar** (~3 in 10 stories; generic market/hiring links skipped), 1-2 sentences.
 - Budget **$10/month**; expected running cost ~$2-3/month (`python -m signality.status`).
 
 **Recovered from the first session (Stages 1-2b), not recorded elsewhere**
@@ -235,8 +236,8 @@ inside the sentence; code lets ~1 in 3 alert notes end with a question (story_id
 First prompt was too loose (7/10 notes, three near-identical "market rout → hiring" notes, a question on
 almost every one) → tightened: 3/10, all specific. Measured: ~$0.0025 per alert note, $0.007-0.012 per
 digest → ~$0.45/month. Preview without sending: `python -m signality.impact --preview 10`. 89 tests.
-**Live** (restart 20:17 CT, migration 12 applied). Open: Nicholas's call on the note bar (strict, recommended,
-vs. a bit looser) and his review of the first real notes (task #10), starting with the Nov 10 digest.
+**Live** (restart 20:17 CT, migration 12 applied). **Decision (Nicholas, Nov 9): keep the strict bar** (~3 in
+10 stories get a note). Open: his review of the first real notes (task #10), starting with the Nov 10 digest.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
