@@ -341,6 +341,21 @@ MIGRATIONS = [
     ALTER TABLE web_results ADD COLUMN independent INTEGER;
     ALTER TABLE claim_events ADD COLUMN evidence_web_result_id INTEGER REFERENCES web_results(id);
     """,
+    # 16 - Receipts never arrive as a message of their own (Nicholas, Nov 10): a receipt for a story
+    #      the user got a 🚨 about is ADDED to that alert by editing it (no new notification), and is
+    #      still listed in the morning digest (claim_receipts). This records each attachment.
+    """
+    CREATE TABLE receipt_attachments (
+        id                  INTEGER PRIMARY KEY,
+        claim_event_id      INTEGER NOT NULL REFERENCES claim_events(id),
+        recipient           TEXT NOT NULL,      -- platform + account, e.g. 'telegram:123'
+        story_id            INTEGER NOT NULL REFERENCES stories(id),  -- the alerted story it was added to
+        channel_message_id  TEXT NOT NULL,      -- the alert message that was edited
+        attached_at         TEXT NOT NULL,
+        edited              INTEGER NOT NULL,   -- 0 = didn't fit or edit failed (digest still has it)
+        UNIQUE (claim_event_id, recipient)
+    );
+    """,
 ]
 
 

@@ -104,6 +104,12 @@ def _stored(conn, user_id, story_id, kind):
                         (user_id, story_id, kind)).fetchone()
 
 
+def stored_note(conn, user_key, story_id, kind="alert"):
+    """The note already written for this story ('' if none). Never calls the AI."""
+    row = _stored(conn, users.get_or_create(conn, user_key), story_id, kind)
+    return (row[0] or "") if row else ""
+
+
 def _store(conn, cfg, user_id, story_id, kind, note, connects_to, reason):
     conn.execute(
         "INSERT INTO impact_notes (user_id, story_id, kind, note, connects_to, reason, model, created_at)"

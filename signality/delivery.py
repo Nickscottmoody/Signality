@@ -151,30 +151,59 @@ def digest_since(conn, cfg):
     return max(earliest, last) if last else earliest
 
 
-def _alerted_headlines(conn, days=30):
+def _alerts(conn, days=30):
+    """Recent 🚨 alerts, newest first: (story_id, headline, message id, note)."""
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds")
-    return [(r[0], r[1]) for r in conn.execute(
-        "SELECT d.story_id, t.headline FROM deliveries d JOIN story_triage t ON t.story_id = d.story_id"
-        " AND t.purpose = 'live' WHERE d.kind = 'alert' AND d.recipient = ? AND d.sent_at >= ?",
+    return conn.execute(
+        "SELECT d.story_id, t.headline, d.channel_message_id, d.note FROM deliveries d JOIN story_triage t"
+        " ON t.story_id = d.story_id AND t.purpose = 'live' WHERE d.kind = 'alert' AND d.recipient = ?"
+        " AND d.sent_at >= ? ORDER BY d.sent_at DESC",
         (recipient(), since),
-    )]
+    ).fetchall()
 
 
-def send_live_receipts(conn, cfg):
-    """Receipts for claims from a saga you got a 🚨 about go out right away. Returns how many."""
-    alerted = _alerted_headlines(conn)
-    if not alerted:
+def attach_receipts_to_alerts(conn, cfg):
+    """Receipts never arrive as a message of their own (Nicholas, Nov 10).
+
+    A receipt for a saga you got a 🚨 about is added to that alert by EDITING it, which makes no
+    notification. It's still listed in the next morning digest. Returns how many were attached.
+    """
+    alerts = _alerts(conn)
+    if not alerts:
         return 0
-    sent = 0
+    attached, touched = 0, {}
     for event_id in receipts.pending(conn, recipient()):
+        if conn.execute("SELECT 1 FROM receipt_attachments WHERE claim_event_id = ? AND recipient = ?",
+                        (event_id, recipient())).fetchone():
+            continue
         r = receipts.card(conn, event_id)
         story_id = conn.execute("SELECT story_id FROM claims WHERE id = ?", (r.claim_id,)).fetchone()[0]
         words = key_words(r.story_headline or r.claim)
-        if any(sid == story_id or related(words, key_words(h)) for sid, h in alerted):
-            result = telegram.deliver(messages.Message(kind="receipt", silent=True, receipts=[r]), cfg)
-            receipts.mark_sent(conn, [event_id], recipient(), "live", result["message_id"])
-            sent += 1
-    return sent
+        alert = next((a for a in alerts if a["story_id"] == story_id or related(words, key_words(a["headline"]))), None)
+        if alert is None:
+            continue  # nothing to add it to: the digest carries it
+        conn.execute(
+            "INSERT INTO receipt_attachments (claim_event_id, recipient, story_id, channel_message_id, attached_at, edited)"
+            " VALUES (?, ?, ?, ?, ?, 0)", (event_id, recipient(), alert["story_id"], alert["channel_message_id"], db.utcnow()))
+        conn.commit()
+        touched[alert["story_id"]] = alert
+        attached += 1
+    for story_id, alert in touched.items():  # one edit per alert, showing all its receipts so far
+        events = [row[0] for row in conn.execute(
+            "SELECT claim_event_id FROM receipt_attachments WHERE recipient = ? AND story_id = ? ORDER BY id",
+            (recipient(), story_id))]
+        card = messages.story_card(conn, story_id)
+        card.impact_note = impact.stored_note(conn, recipient(), story_id, "alert")
+        message = messages.Message(kind="alert", silent=True, image="alert", cards=[card], note=alert["note"] or "",
+                                   receipts=[receipts.card(conn, e) for e in events])
+        try:
+            ok = telegram.update_delivered(message, alert["channel_message_id"], cfg)
+        except Exception:
+            ok = False  # the digest still carries every receipt
+        conn.execute("UPDATE receipt_attachments SET edited = ? WHERE recipient = ? AND story_id = ?",
+                     (int(ok), recipient(), story_id))
+        conn.commit()
+    return attached
 
 
 def build_digest(conn, cfg):
@@ -277,6 +306,6 @@ def run(conn, cfg):
     """One delivery round: budget notices, immediate messages, then the digest if it's time."""
     notice = budget_notices(conn, cfg)
     sent = send_immediate(conn, cfg)
-    live_receipts = send_live_receipts(conn, cfg)
+    attached = attach_receipts_to_alerts(conn, cfg)
     digest = maybe_send_digest(conn, cfg)
-    return {**sent, "receipts": live_receipts, "digest_items": digest, "budget_notice": notice}
+    return {**sent, "receipts": attached, "digest_items": digest, "budget_notice": notice}

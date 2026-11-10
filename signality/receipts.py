@@ -1,8 +1,9 @@
 """🧾 Receipts: telling you when a tracked claim resolves.
 
 A receipt is due for every claim_event that RESOLVED a claim (confirmed, walked
-back, delayed, never happened). Each one reaches a recipient once: right away if
-it belongs to a saga you got a 🚨 alert about, otherwise in the morning digest.
+back, delayed, never happened). Receipts never arrive as a message of their own:
+each one is listed in the next morning digest, and if it belongs to a saga you got
+a 🚨 alert about, it's also added to that alert by editing it (no notification).
 """
 from . import claims, db, messages
 

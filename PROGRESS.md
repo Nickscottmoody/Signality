@@ -10,8 +10,7 @@ search live Nov 9; next: step 3 developing stories; see the Stage 3 plan under "
 **Task #10 done (Nov 10):** the first 8am digest arrived as ONE message, looked right, and the 🎯 note
 fit him. But a 🧾 receipt arrived as a SEPARATE message 4 seconds before the digest (claim 121, Anthropic
 ~$1.4T IPO valuation, confirmed 8:13 CT from Anthropic's updated filing via TechCrunch; sent "live" because
-its saga got a 🚨 at 6:59 CT). Open question for Nicholas: fold live receipts into the digest when the
-digest goes out in the same round. Overnight: claim search ran 10/10 (claim 37 "the woman is a suspected
+its saga got a 🚨 at 6:59 CT). Nicholas then chose: receipts are never their own message (see Decisions). Overnight: claim search ran 10/10 (claim 37 "the woman is a suspected
 Chinese spy" → 🔴 disputed: China called it a smear, AP/PBS say only "alleged"); 30/30 story searches; 2
 alerts today (Anthropic $1.4T IPO 87, Gemini 4 Carbon 70). Step 3 (developing stories) is next.
 
@@ -39,9 +38,14 @@ alerts today (Anthropic $1.4T IPO 87, Gemini 4 Carbon 70). Step 3 (developing st
   false`) → 50-64 lead the digest.
 - Digest **8am America/Chicago**, covers everything since the last digest (max 48h), ONE message (~12 stories),
   related stories folded ("➕ N related").
-- Receipts: in the digest; **live** if the claim's saga got a 🚨. Only claims genuinely in doubt are tracked;
+- Receipts (**changed Nov 10**): NEVER a message of their own ("I don't want to get spammed"). A receipt
+  for a saga he got a 🚨 about is **added to that original alert by editing it** (no new notification),
+  and every receipt is listed in the next morning digest. Rejected: separate live receipt messages (the
+  old way; one arrived 4s before the digest), digest-only. Only claims genuinely in doubt are tracked;
   claim text is a plain fact, claimant kept separate; one record per claim (`same_as`).
 - Sources: **17** (Washington Examiner added for balance); lean from AllSides (checked 2026-11-09).
+- Developing stories (step 3, Nicholas Nov 10): updates on a story go in the **digest**; an update that
+  itself scores **65+** may **alert** him.
 - "🎯 How it affects you": **strict bar** (~3 in 10 stories; generic market/hiring links skipped), 1-2 sentences.
 - Budget **$10/month**; expected running cost ~$2-3/month (`python -m signality.status`).
 - Search service (task #11, Nov 9): **Tavily**, free plan (1,000 searches/month), **no card** so it can
@@ -313,6 +317,16 @@ China 1% chips: only repeats → unchanged (correct). Measured: Haiku $0.0005/cl
 needed → ~$0.75/month. `python -m signality.claim_search --list` / `--claim N`. 112 tests. **Live** (restart
 22:17 CT, migration 15 applied, clean round; searches paused until midnight because testing used today's
 30). Check tomorrow's log for the first `claim search:` lines.
+
+**Receipts folded into alerts — done (code), waiting for restart.** Nicholas's choice A (Nov 10): no
+receipt is ever its own message. `delivery.attach_receipts_to_alerts` (replaces `send_live_receipts`) adds
+a receipt for an alerted saga to the newest matching 🚨 by editing it (`telegram.update_delivered`:
+`editMessageCaption` for photo alerts, `editMessageText` with Siggy above for text alerts; "not modified"
+counts as done; if it won't fit a 1024-char caption it's skipped). Migration 16 `receipt_attachments`
+records each attachment (edited 0/1); attaching does NOT count as delivery, so `claim_receipts` / the
+digest still list every receipt. Re-rendering uses the stored impact note only (`impact.stored_note`, never
+calls the AI). Tested for real: claim 121's receipt added to the 6:59 CT Anthropic $1.4T alert (story 854,
+text message, edited OK, no ping). 116 tests.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

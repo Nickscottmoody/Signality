@@ -126,7 +126,7 @@ def one_round():
         d = delivery.run(conn, cfg)
         conn.close()
         if any(d.values()):
-            log.info("delivery: %d alerts, %d silent, %d receipts, %d in digest%s", d["alert"], d["silent"],
+            log.info("delivery: %d alerts, %d silent, %d receipts added to alerts, %d in digest%s", d["alert"], d["silent"],
                      d["receipts"], d["digest_items"],
                      f", budget notice: {d['budget_notice']}" if d["budget_notice"] else "")
     except Exception:

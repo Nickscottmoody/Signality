@@ -150,6 +150,7 @@ the page that settled it.
 | 🔔 **Silent** | Importance 50–64 (optional; off by default, so these lead the digest) | Text message, no sound |
 | 📰 **Digest** | Importance 25–64, alert-level stories Sonnet declined, plus anything unconfirmed | One message each morning at 8am |
 | — | Below 25 | Stored and searchable, never sent |
+| 🧾 **Receipt** | A tracked claim resolves | Never its own message: listed in the next digest, and added to the original 🚨 alert by editing it (no new notification) |
 
 Every story shows its validity label **and the reason**, a self-reported flag where it applies,
 whether it was summarized from a preview only, the four factor ratings, and links to each outlet.

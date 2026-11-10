@@ -73,6 +73,20 @@ def send_message(text, chat_id=None, silent=False, image_url=None, buttons=None)
     return _call("sendMessage", data)
 
 
+def edit_text(message_id, text, chat_id=None, image_url=None):
+    """Replace the text of a message already sent (no new notification)."""
+    preview = ({"url": image_url, "show_above_text": True, "prefer_large_media": True}
+               if image_url else {"is_disabled": True})
+    return _call("editMessageText", {"chat_id": _chat_id(chat_id), "message_id": message_id, "text": text,
+                                     "parse_mode": "HTML", "link_preview_options": json.dumps(preview)})
+
+
+def edit_caption(message_id, caption, chat_id=None):
+    """Replace the caption under a photo already sent (no new notification)."""
+    return _call("editMessageCaption", {"chat_id": _chat_id(chat_id), "message_id": message_id,
+                                        "caption": caption, "parse_mode": "HTML"})
+
+
 def send_photo(image, caption, chat_id=None, silent=False, buttons=None):
     """Send one of Siggy's pictures with a caption (max 1024 characters)."""
     data = {
@@ -254,6 +268,38 @@ def deliver(message, cfg, chat_id=None):
     body = f"<b>{_e(message.title)}</b>\n{_e(message.text)}" if message.title else _e(message.text)
     result = with_image(body, message.image, message.silent)
     return {"message_id": result["message_id"], "story_ids": []}
+
+
+def update_delivered(message, message_id, cfg, chat_id=None):
+    """Re-show a 🚨/🔔 already sent, now with its 🧾 receipts underneath, by editing it in place.
+
+    Editing never makes a new notification. Returns True if the message now shows the receipts,
+    False if they don't fit (a photo caption is capped at 1024 characters) or Telegram refused.
+    """
+    card = message.cards[0]
+    body = render_card(card, message.kind, message.note)
+    body += "\n\n" + "\n\n".join(render_receipt(r, compact=True) for r in message.receipts)
+    image_url = cfg["siggy"].get("image_urls", {}).get("alert" if message.kind == "alert" else "normal")
+
+    def done(err):  # an unchanged message means it already shows exactly this
+        return "not modified" in str(err).lower()
+
+    if visible_length(body) <= CAPTION_LIMIT:
+        try:
+            edit_caption(message_id, body, chat_id)
+            return True
+        except TelegramError as e:
+            if done(e):
+                return True
+            if "no caption" not in str(e).lower():
+                return False
+    if visible_length(body) > TEXT_LIMIT:
+        return False
+    try:  # the alert was sent as text with Siggy shown above it
+        edit_text(message_id, body, chat_id, image_url=image_url if message.kind == "alert" else None)
+        return True
+    except TelegramError as e:
+        return done(e)  # "no text in the message": it's a photo whose caption is too short for this
 
 
 def test_message(cfg):
