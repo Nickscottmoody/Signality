@@ -8,7 +8,9 @@ Read this at the start of every session.
 "🎯 How it affects you"). **Stage 3 in progress** (step 1 story corroboration live Nov 9; step 2 claim
 search live Nov 9; next: step 3 developing stories; see the Stage 3 plan under "Current state").
 First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive as one message, look right, and
-did any 🎯 note fit him? (This finishes his task #10.) Fix anything wrong before Stage 3.
+did any 🎯 note fit him? (This finishes his task #10.) Also check the log for the first live
+`claim search:` lines. **Nicholas chose to start Stage 3 step 3 (developing stories) only after
+reviewing that digest**, since step 3 changes how the digest groups stories.
 
 **Working rules we settled on**
 - Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
