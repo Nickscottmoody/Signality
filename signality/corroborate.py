@@ -29,7 +29,14 @@ SYSTEM = """You check web search results for Signality, a personal AI-news agent
 each page, decide whether it independently backs up the SAME story. Code turns your verdicts \
 into a public validity label, so be strict: when unsure, choose "unclear".
 
-For each result, pick one basis:
+First write key_fact: the ONE specific thing the story's headline reports happened (who did \
+what), in at most 15 words. Background and causes are not the key fact. Example: for "Law firms \
+race to file suits against Nvidia after CEO probe and stock drop", the key fact is "law firms are \
+filing securities lawsuits against Nvidia", not the probe or the stock drop.
+
+Then, for each page:
+- reports_key_fact: true only if the page itself reports key_fact (not just its background).
+- basis: pick one:
 - not_same_event: about a different event, an older/newer development, or only the same company \
 or topic. The story's specific news (what its headline says happened) must be reported, not \
 just its background. Example: if the story is "bettors put the odds of the Marvell-Lumentum \
@@ -44,7 +51,7 @@ another site, Yahoo/MSN copies, a Reuters or AP byline/dateline on someone else'
 "Already reported by" (a sister site such as Bloomberg Law for Bloomberg). Put the outlet it \
 repeats in original_outlet.
 - primary: the page is ON the website of the organization the story is about (its newsroom, \
-blog, filing) or of a government, court, or regulator. A news site quoting or linking to the \
+blog, filing) or of a government, court, or regulator, AND it states key_fact itself. A news site quoting or linking to the \
 organization's post is own_reporting, not primary.
 - official_confirmation: a newsroom reports that the organization itself confirmed the event \
 on the record. "Says it is investigating reports" or "declined to comment" is NOT confirmation.
@@ -60,24 +67,26 @@ original_outlet: only for repeats_other; otherwise an empty string."""
 SCHEMA = {
     "type": "object",
     "properties": {
+        "key_fact": {"type": "string"},
         "results": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "string"},
+                    "reports_key_fact": {"type": "boolean"},
                     "basis": {"type": "string", "enum": [
                         "not_same_event", "own_reporting", "repeats_other", "primary",
                         "official_confirmation", "denial", "low_quality", "unclear"]},
                     "original_outlet": {"type": "string"},
                     "why": {"type": "string"},
                 },
-                "required": ["id", "basis", "original_outlet", "why"],
+                "required": ["id", "reports_key_fact", "basis", "original_outlet", "why"],
                 "additionalProperties": False,
             },
         },
     },
-    "required": ["results"],
+    "required": ["key_fact", "results"],
     "additionalProperties": False,
 }
 
@@ -155,9 +164,12 @@ def judge(conn, cfg, story_id, t, story_outlets, first_seen, results):
         if digits:
             verdicts[int(digits)] = v
     for i, r in enumerate(results, start=1):
-        v = verdicts.get(i, {"basis": "unclear", "why": "no verdict returned", "original_outlet": ""})
+        v = verdicts.get(i, {"basis": "unclear", "why": "no verdict returned", "original_outlet": "",
+                             "reports_key_fact": False})
         r.update(basis=v["basis"], why=v["why"], original_outlet=v["original_outlet"] or None)
-    return results, cost
+        if not v["reports_key_fact"] and r["basis"] in COUNTED:
+            _overrule(r, "not_same_event", "page doesn't report the key fact")
+    return results, cost, data["key_fact"]
 
 
 COUNTED = ("own_reporting", "primary", "official_confirmation", "denial")
@@ -208,11 +220,11 @@ def investigate(conn, cfg, story_id, known=None):
     before = validity.current(conn, story_id)
     query = t["headline"]
 
-    def record(ok, credits, error=None, count=0, cost=0.0):
+    def record(ok, credits, error=None, count=0, cost=0.0, key_fact=None):
         cur = conn.execute(
             "INSERT INTO web_searches (subject_type, subject_id, provider, query, searched_at, credits, ok, error,"
-            " result_count, check_cost_usd) VALUES ('story', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (story_id, search.PROVIDER, query, db.utcnow(), credits, int(ok), error, count, cost),
+            " result_count, check_cost_usd, key_fact) VALUES ('story', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (story_id, search.PROVIDER, query, db.utcnow(), credits, int(ok), error, count, cost, key_fact),
         )
         conn.commit()
         return cur.lastrowid
@@ -234,13 +246,13 @@ def investigate(conn, cfg, story_id, known=None):
             continue  # an outlet we already have, or its sister site (Bloomberg Law for Bloomberg)
         results.append({**r, "outlet": known.get(r["domain"], r["domain"])})
 
-    cost = 0.0
+    cost, key_fact = 0.0, None
     if results:
-        results, cost = judge(conn, cfg, story_id, t, story_outlets, first_seen, results)
+        results, cost, key_fact = judge(conn, cfg, story_id, t, story_outlets, first_seen, results)
         primary_domains = {d for d, name in known.items()
                            if any(src["name"] == name and src["type"] == "primary" for src in cfg["sources"])}
         results = apply_rules(results, cfg, f"{t['headline']} {t['summary']}", primary_domains)
-    search_id = record(True, 1, count=len(results), cost=cost)
+    search_id = record(True, 1, count=len(results), cost=cost, key_fact=key_fact)
     for r in results:
         conn.execute(
             "INSERT INTO web_results (search_id, url, domain, outlet, title, published_at, snippet, basis,"
@@ -251,7 +263,7 @@ def investigate(conn, cfg, story_id, known=None):
     conn.commit()
     after = validity.update(conn, story_id)
     return {
-        "story_id": story_id, "headline": t["headline"], "results": results, "cost_usd": cost,
+        "story_id": story_id, "headline": t["headline"], "results": results, "cost_usd": cost, "key_fact": key_fact,
         "before": before["label"] if before else None, "after": after["label"], "reason": after["reason"],
     }
 
@@ -298,7 +310,8 @@ def main():
             print(f"  #{c['story_id']}  {c['importance']}  {t}")
         return
     r = investigate(conn, cfg, args.story)
-    print(f"#{r['story_id']} {r['headline']}\n  {r['before']} -> {r['after']}: {r['reason']}\n  AI cost ${r['cost_usd']:.4f}")
+    print(f"#{r['story_id']} {r['headline']}\n  key fact: {r['key_fact']}\n"
+          f"  {r['before']} -> {r['after']}: {r['reason']}\n  AI cost ${r['cost_usd']:.4f}")
     for x in r["results"]:
         print(f"  - {x['basis']:<22} {x['outlet']:<28} {x['why']}")
 

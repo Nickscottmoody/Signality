@@ -281,7 +281,11 @@ web search)" or "Web search found no independent confirmation yet." Found pages 
 Tested on 8 real stories (13 searches): #668 ✅ (Nvidia's own board statement), #708 🟢 (BBC + Reuters),
 #721 🟢, #724 🟢, others correctly unchanged. Cost: ~$0.0005 AI per search → ≤$0.45/month at the cap.
 `python -m signality.corroborate --list` / `--story N`. 106 tests.
-Note: until the restart, the old service relabels stories without web evidence (harmless flip-flop rows).
+**Live** (restart 21:03 CT): first round searched 5 stories, 2 labels changed. Spot-check caught a bad ✅:
+"Law firms race to file suits against Nvidia" was "confirmed" by Nvidia's probe statement and pages about
+the stock drop (background, not the lawsuits). Fix: Haiku first writes the story's `key_fact` (stored,
+migration 14) and answers `reports_key_fact` per page; code drops any page that says no. Re-tested: #806
+back to 🟡 (correct); #668 ✅ and #681 🟢 still hold. 107 tests. **Needs another restart.**
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

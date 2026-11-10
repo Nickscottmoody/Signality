@@ -166,3 +166,17 @@ def test_web_evidence_reads_latest_search_counted_results_only():
     assert validity.web_evidence(conn, 1)["results"] == [
         {"outlet": "bbc.com", "basis": "own_reporting", "url": "https://bbc.com/a"}]
     assert validity.update(conn, 1)["label"] == "likely"
+
+
+def test_page_that_misses_the_key_fact_never_counts(monkeypatch):
+    # The model calls Nvidia's page "primary" but says it doesn't report the key fact (the lawsuits).
+    reply = {"key_fact": "law firms are suing Nvidia", "results": [
+        {"id": "R1", "reports_key_fact": False, "basis": "primary", "original_outlet": "", "why": "probe only"},
+        {"id": "R2", "reports_key_fact": True, "basis": "own_reporting", "original_outlet": "", "why": "suits"}]}
+    monkeypatch.setattr(corroborate.ai, "ask_json", lambda *a, **k: (reply, 0.0005))
+    pages = [{"outlet": "NVIDIA Blog", "domain": "nvidia.com", "published_at": None, "title": "t", "snippet": "s"},
+             {"outlet": "reuters.com", "domain": "reuters.com", "published_at": None, "title": "t", "snippet": "s"}]
+    t = {"headline": "Law firms sue Nvidia", "summary": "s"}
+    results, cost, key_fact = corroborate.judge(None, CFG, 1, t, ["Bloomberg"], "2026-11-09T00:00:00+00:00", pages)
+    assert [r["basis"] for r in results] == ["not_same_event", "own_reporting"]
+    assert key_fact == "law firms are suing Nvidia"

@@ -330,6 +330,10 @@ MIGRATIONS = [
     );
     CREATE INDEX idx_web_results_search ON web_results(search_id);
     """,
+    # 14 - Stage 3: the one specific fact the checker judged pages against, kept for review.
+    """
+    ALTER TABLE web_searches ADD COLUMN key_fact TEXT;
+    """,
 ]
 
 
