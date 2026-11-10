@@ -248,6 +248,36 @@ MIGRATIONS = [
     """
     ALTER TABLE claims ADD COLUMN duplicate_of INTEGER REFERENCES claims(id);
     """,
+    # 11 - Stage 2c: users and their private data, kept apart from the shared news tables.
+    #      A user is a platform + account id, so other apps and more people fit later.
+    """
+    CREATE TABLE users (
+        id              INTEGER PRIMARY KEY,
+        platform        TEXT NOT NULL,      -- e.g. 'telegram'
+        account_id      TEXT NOT NULL,      -- the user's id on that platform
+        created_at      TEXT NOT NULL,
+        UNIQUE (platform, account_id)
+    );
+
+    -- The personal profile behind "🎯 How it affects you". Local only (data/ is gitignored).
+    CREATE TABLE user_profiles (
+        user_id         INTEGER PRIMARY KEY REFERENCES users(id),
+        answers         TEXT NOT NULL,      -- JSON: interview question key -> answer
+        summary         TEXT NOT NULL,      -- the short profile the user approved (<~150 words)
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,      -- last time the user approved it
+        next_checkin_at TEXT NOT NULL       -- when Siggy asks "has anything changed?"
+    );
+
+    -- Where a user is in a multi-step chat (e.g. halfway through the interview),
+    -- so a restart doesn't lose their place.
+    CREATE TABLE chat_sessions (
+        user_id         INTEGER PRIMARY KEY REFERENCES users(id),
+        flow            TEXT NOT NULL,      -- e.g. 'profile'
+        state           TEXT NOT NULL,      -- JSON, owned by that flow
+        updated_at      TEXT NOT NULL
+    );
+    """,
 ]
 
 

@@ -72,6 +72,7 @@ class Reply:
     title: str = ""                 # shown in bold above the text
     buttons: list = field(default_factory=list)  # rows of (label, data) tap buttons
     image: str | None = None        # key into config siggy.images, or None for text only
+    replace: bool = False           # after a button tap: update the tapped message instead of sending a new one
 
 
 def story_card(conn, story_id):

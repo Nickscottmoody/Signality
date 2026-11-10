@@ -17,12 +17,12 @@ def memory_db():
 def test_help_lists_working_and_coming_commands():
     [reply] = chat.handle(None, CFG, "telegram:1", "/help")
     assert "/start" in reply.text and "/help" in reply.text
-    assert "Coming soon:" in reply.text and "/profile" in reply.text.split("Coming soon:")[1]
+    assert "Coming soon:" in reply.text and "/myprofile" in reply.text.split("Coming soon:")[1]
 
 
 def test_command_menu_shows_only_working_commands():
     names = [name for name, _ in chat.menu()]
-    assert "help" in names and "profile" not in names
+    assert "help" in names and "profile" in names and "myprofile" not in names
 
 
 def test_commands_ignore_case_bot_name_and_extra_words():
@@ -32,8 +32,8 @@ def test_commands_ignore_case_bot_name_and_extra_words():
 
 def test_unknown_commands_and_plain_text_get_a_friendly_pointer_to_help():
     assert "/help" in chat.handle(None, CFG, "telegram:1", "/nope")[0].text
-    assert "/help" in chat.handle(None, CFG, "telegram:1", "hello?")[0].text
-    assert "coming soon" in chat.handle(None, CFG, "telegram:1", "/profile")[0].text
+    assert "/help" in chat.handle(memory_db(), CFG, "telegram:1", "hello?")[0].text
+    assert "coming soon" in chat.handle(None, CFG, "telegram:1", "/myprofile")[0].text
 
 
 def test_button_codes_must_fit_telegram_limit():
@@ -54,10 +54,11 @@ def test_only_the_owner_in_a_private_chat_gets_answers(monkeypatch):
     monkeypatch.setenv("TELEGRAM_USER_ID", OWNER)
     sent = []
     send = lambda reply, chat_id, cfg: sent.append((reply, chat_id))
-    telegram_bot.process_update(_message(999, "/help"), None, CFG, send=send)
-    telegram_bot.process_update(_message(int(OWNER), "/help", chat_type="group"), None, CFG, send=send)
+    call = lambda method, data: None
+    telegram_bot.process_update(_message(999, "/help"), None, CFG, send=send, call=call)
+    telegram_bot.process_update(_message(int(OWNER), "/help", chat_type="group"), None, CFG, send=send, call=call)
     assert sent == []
-    telegram_bot.process_update(_message(int(OWNER), "/help"), None, CFG, send=send)
+    telegram_bot.process_update(_message(int(OWNER), "/help"), None, CFG, send=send, call=call)
     assert len(sent) == 1 and sent[0][1] == int(OWNER)
 
 
@@ -69,7 +70,7 @@ def test_button_tap_is_acknowledged_and_its_buttons_removed(monkeypatch):
         "message": {"message_id": 9, "chat": {"id": int(OWNER), "type": "private"}}}}
     telegram_bot.process_update(tap, None, CFG, send=lambda r, c, cfg: sent.append(r),
                                 call=lambda method, data: calls.append(method))
-    assert calls == ["answerCallbackQuery", "editMessageReplyMarkup"]
+    assert calls == ["answerCallbackQuery", "sendChatAction", "editMessageReplyMarkup"]
     assert "expired" in sent[0].text
 
 

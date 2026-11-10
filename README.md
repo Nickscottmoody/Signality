@@ -142,6 +142,10 @@ Siggy also listens. Send `/help` in Telegram to see his commands. Commands are d
 `signality/telegram_bot.py` only translates to and from Telegram. Only the owner's Telegram
 account is answered, and only in a private chat, so personal details never reach a group or channel.
 
+`/profile` runs a 12-question onboarding interview (tap buttons where possible). Sonnet condenses the
+answers into a short profile (under 150 words) that the user approves or edits before it's saved. It
+lives only in the local database and powers the "🎯 How it affects you" notes.
+
 ## Meet Siggy
 
 | | |
@@ -208,7 +212,7 @@ Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for 
 ## Status
 
 Stages 1, 2a, 2b complete and live ✅ (fetching, scoring, alerts, digest, claim tracking with receipts,
-bias audit). Stage 2c in progress: two-way chat is built; the onboarding interview is next.
+bias audit). Stage 2c in progress: two-way chat and the onboarding interview are built.
 See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |

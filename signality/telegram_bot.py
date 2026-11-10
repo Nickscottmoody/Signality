@@ -27,10 +27,14 @@ def user_key(telegram_user_id):
     return f"telegram:{telegram_user_id}"
 
 
+def _body(reply):
+    e = telegram._e
+    return f"<b>{e(reply.title)}</b>\n{e(reply.text)}" if reply.title else e(reply.text)
+
+
 def send_reply(reply, chat_id, cfg):
     """Show one chat.Reply in Telegram as ONE message."""
-    e = telegram._e
-    body = f"<b>{e(reply.title)}</b>\n{e(reply.text)}" if reply.title else e(reply.text)
+    body = _body(reply)
     if reply.image and telegram.visible_length(body) <= telegram.CAPTION_LIMIT:
         return telegram.send_photo(cfg["siggy"]["images"][reply.image], body, chat_id, buttons=reply.buttons)
     image_url = cfg["siggy"].get("image_urls", {}).get(reply.image) if reply.image else None
@@ -42,6 +46,25 @@ def is_owner(sender_id, chat_type):
     return bool(owner) and str(sender_id) == owner and chat_type == "private"
 
 
+def _typing(chat_id, call):
+    """Show "typing..." while Siggy works (some answers take a few seconds)."""
+    try:
+        call("sendChatAction", {"chat_id": chat_id, "action": "typing"})
+    except telegram.TelegramError:
+        pass
+
+
+def _edit(reply, chat_id, message_id, call):
+    """Update the tapped message in place (its text and buttons). False if Telegram refused."""
+    try:
+        call("editMessageText", {"chat_id": chat_id, "message_id": message_id, "text": _body(reply),
+                                 "parse_mode": "HTML",
+                                 "reply_markup": telegram.keyboard(reply.buttons) or '{"inline_keyboard": []}'})
+        return True
+    except telegram.TelegramError as e:
+        return "not modified" in str(e)  # same text tapped twice: nothing to change, that's fine
+
+
 def process_update(update, conn, cfg, send=send_reply, call=telegram._call):
     """Handle one Telegram update (a typed message or a button tap). Never raises."""
     try:
@@ -51,8 +74,10 @@ def process_update(update, conn, cfg, send=send_reply, call=telegram._call):
             if not is_owner(sender.get("id"), chat_info.get("type")):
                 log.info("chat: ignored a message from someone who isn't the owner")
                 return
-            replies = chat.handle(conn, cfg, user_key(sender["id"]), msg.get("text", ""))
             chat_id = chat_info["id"]
+            _typing(chat_id, call)
+            for reply in chat.handle(conn, cfg, user_key(sender["id"]), msg.get("text", "")):
+                send(reply, chat_id, cfg)
         elif "callback_query" in update:
             tap = update["callback_query"]
             msg = tap.get("message", {})
@@ -60,17 +85,18 @@ def process_update(update, conn, cfg, send=send_reply, call=telegram._call):
             if not is_owner(tap["from"]["id"], msg.get("chat", {}).get("type")):
                 log.info("chat: ignored a button tap from someone who isn't the owner")
                 return
-            chat_id = msg["chat"]["id"]
-            try:  # remove the buttons that were tapped, so an answer can't be sent twice
-                call("editMessageReplyMarkup", {"chat_id": chat_id, "message_id": msg["message_id"],
-                                                "reply_markup": '{"inline_keyboard": []}'})
-            except telegram.TelegramError:
-                pass  # e.g. the message is too old to edit; the tap still counts
+            chat_id, message_id = msg["chat"]["id"], msg["message_id"]
+            _typing(chat_id, call)
             replies = chat.handle_button(conn, cfg, user_key(tap["from"]["id"]), tap.get("data", ""))
-        else:
-            return
-        for reply in replies:
-            send(reply, chat_id, cfg)
+            if not any(r.replace for r in replies):
+                try:  # remove the tapped buttons, so an answer can't be sent twice
+                    call("editMessageReplyMarkup", {"chat_id": chat_id, "message_id": message_id,
+                                                    "reply_markup": '{"inline_keyboard": []}'})
+                except telegram.TelegramError:
+                    pass  # e.g. the message is too old to edit; the tap still counts
+            for reply in replies:
+                if not (reply.replace and _edit(reply, chat_id, message_id, call)):
+                    send(reply, chat_id, cfg)
     except Exception:
         log.exception("chat: couldn't handle a Telegram update")
 

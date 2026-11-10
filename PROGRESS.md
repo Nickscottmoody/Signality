@@ -179,7 +179,19 @@ messages older than 15 min but answers newer ones; offset in `app_state`; logs o
 `messages.py`; `send_message`/`send_photo` take tap buttons. `chat.enabled` in config (no restart needed
 to switch). Database switched to WAL so the chat thread and news loop don't block each other.
 Note: only ONE program can listen to the bot at a time — don't run `python -m signality.telegram_bot`
-while the service runs. 66 tests.
+while the service runs. 66 tests. **Live** after Nicholas's restart (19:47 CT); /help replied. ✅
+
+**Stage 2c, Step 2 — done (code), waiting for restart.** `/profile` interview (`profile.py`): 12 questions
+(status, field, job, 1-3yr goals, industries, skills, AI use, excites, worries, location, impact areas,
+off-limits) one at a time; tap buttons for status/industries/AI use/areas (multi-pick with ✅ ticks + Done),
+typing always accepted, every question skippable, `/cancel` stops. Tapped questions are edited in place to
+show the answer. Sonnet (`profile_write`, role high_stakes) writes a ≤150-word second-person profile from
+the answers only (no invented details, no inferred sensitive traits, "Off-limits:" sentence kept); Nicholas
+sees it with ✅ Save / ✏️ Change something (types the change, Sonnet rewrites) / 🔁 Start over. Nothing is
+saved before Save. Migration 11: `users` (platform + account_id), `user_profiles` (answers, summary,
+next_checkin_at = +90 days), `chat_sessions` (interview progress survives restarts). Config: `profile.max_words`,
+`profile.checkin_days`. Sample run on made-up answers: 92 words, change request handled, $0.0067 for 2 calls.
+"typing…" shown while Siggy works. 76 tests.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

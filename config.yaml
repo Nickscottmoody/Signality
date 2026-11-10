@@ -119,6 +119,11 @@ chat:
   enabled: true               # false = Siggy stops listening for commands (news and alerts keep working)
   long_poll_seconds: 50       # how long each "any new messages?" check waits open; replies are still instant
 
+# --- Your personal profile (the /profile interview), used for "🎯 How it affects you" ---
+profile:
+  max_words: 150              # longest the saved profile may be (shorter = cheaper notes)
+  checkin_days: 90            # how often Siggy asks whether anything in your profile has changed
+
 # --- AI keyword filter (free, runs in code before any paid AI step) ---
 # Sources marked ai_filter: true cover more than AI, so their stories must mention
 # at least one of these words in the headline or preview to be kept.
