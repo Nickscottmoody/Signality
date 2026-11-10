@@ -14,6 +14,10 @@ The label comes from rules in code, not from the model's opinion:
   💬 opinion     opinion/analysis: no factual label applies
 
 Company claims about their own performance carry a separate "self-reported" flag.
+
+Web search (Stage 3, corroborate.py) can add evidence the feeds missed: other outlets'
+own reporting, the organization's own page, or a denial. Only results the checker judged
+as the same event count, and repeats of another outlet still count once.
 """
 import re
 from datetime import datetime, timedelta, timezone
@@ -45,11 +49,17 @@ def _names(names):
     return ", ".join(names[:-1]) + f" and {names[-1]}" if len(names) > 1 else names[0]
 
 
-def decide(triage, articles):
+# Web-search verdicts that count as evidence (everything else is kept for review only).
+WEB_COUNTED = ("own_reporting", "primary", "official_confirmation", "denial")
+
+
+def decide(triage, articles, web=None):
     """Pick the label for one story.
 
     triage:   the story's triage row (content_type, sourcing, attributed_to, self_reported, article_id)
     articles: every article in the story, each with source_id, source_name, source_type, title, id
+    web:      None if never searched, else {"results": [{outlet, basis}, ...]} from the latest
+              successful web search (only WEB_COUNTED results matter)
     Returns (label, reason, independent_outlet_count).
     """
     # Independent outlets: news/specialist sources that aren't just repeating someone else.
@@ -65,6 +75,16 @@ def decide(triage, articles):
     primary = [a["source_name"] for a in articles if a["source_type"] == "primary"]
     read_from = next(a["source_name"] for a in articles if a["id"] == triage["article_id"])
 
+    web_results = (web or {}).get("results", [])
+    by_basis = lambda basis: [r["outlet"] for r in web_results if r["basis"] == basis]
+    known = {name.lower() for name in outlets} | {a["source_name"].lower() for a in articles}
+    web_outlets = []
+    for name in by_basis("own_reporting"):  # one per outlet, and never one we already counted
+        if name.lower() not in known:
+            known.add(name.lower())
+            web_outlets.append(name)
+    found = " (found by web search)"
+
     if triage["content_type"] == "opinion" or triage["sourcing"] == "not_applicable":
         return "opinion", "Opinion or analysis piece; no factual label applies.", len(outlets)
     if triage["sourcing"] == "denial_or_correction":
@@ -73,19 +93,31 @@ def decide(triage, articles):
         return "confirmed", f"Published by {primary[0]} itself.", len(outlets)
     if triage["sourcing"] == "official_source":
         return "confirmed", f"Based on an official statement or document, per {read_from}.", len(outlets)
-    if len(outlets) >= 2:
-        return "likely", f"Reported independently by {len(outlets)} outlets: {_names(outlets)}.", len(outlets)
+    total = len(outlets) + len(web_outlets)
+    if by_basis("denial"):
+        return "disputed", f"{by_basis('denial')[0]} reports a denial or correction{found}.", total
+    if by_basis("primary"):
+        return "confirmed", f"Confirmed on {by_basis('primary')[0]}, the organization's own page{found}.", total
+    if by_basis("official_confirmation"):
+        return ("confirmed", f"{by_basis('official_confirmation')[0]} reports the organization confirmed it "
+                             f"on the record{found}.", total)
+    if total >= 2:
+        reason = f"Reported independently by {total} outlets: {_names(outlets + web_outlets)}"
+        if web_outlets:
+            reason += f" ({_names(web_outlets)} found by web search)"
+        return "likely", reason + ".", total
+    not_yet = " Web search found no independent confirmation yet." if web is not None else ""
     if triage["sourcing"] == "rumor_leak_social":
-        return ("unverified", f"Based on a rumor, leak, or social-media post ({read_from}); not yet confirmed.",
-                len(outlets))
+        return ("unverified", f"Based on a rumor, leak, or social-media post ({read_from}); not yet confirmed."
+                + not_yet, len(outlets))
     original = (triage["attributed_to"] or "").strip()
     cites_itself = original and (original.lower() in read_from.lower() or read_from.lower() in original.lower())
     if triage["sourcing"] == "repeats_other_outlet" and not cites_itself:
         return ("reported", f"{read_from} is relaying reporting from {original or 'another outlet'}; "
-                            "counts as one source.", max(len(outlets), 1))
+                            "counts as one source." + not_yet, max(len(outlets), 1))
     if triage["sourcing"] == "anonymous_sources":
-        return "reported", f"One outlet so far ({read_from}), citing unnamed sources.", len(outlets)
-    return "reported", f"One outlet so far ({read_from}).", len(outlets)
+        return "reported", f"One outlet so far ({read_from}), citing unnamed sources." + not_yet, len(outlets)
+    return "reported", f"One outlet so far ({read_from})." + not_yet, len(outlets)
 
 
 def story_articles(conn, story_id):
@@ -96,6 +128,21 @@ def story_articles(conn, story_id):
         """,
         (story_id,),
     ).fetchall()
+
+
+def web_evidence(conn, story_id):
+    """The latest successful web search for this story, as decide() wants it; None if never searched."""
+    search = conn.execute(
+        "SELECT id FROM web_searches WHERE subject_type = 'story' AND subject_id = ? AND ok = 1"
+        " ORDER BY id DESC LIMIT 1", (story_id,),
+    ).fetchone()
+    if search is None:
+        return None
+    rows = conn.execute(
+        f"SELECT outlet, basis, url FROM web_results WHERE search_id = ? AND basis IN ({','.join('?' * len(WEB_COUNTED))})"
+        " ORDER BY id", (search[0], *WEB_COUNTED),
+    ).fetchall()
+    return {"results": [dict(r) for r in rows]}
 
 
 def current(conn, story_id):
@@ -112,7 +159,7 @@ def update(conn, story_id):
     ).fetchone()
     if triage is None:
         return None
-    label, reason, count = decide(triage, story_articles(conn, story_id))
+    label, reason, count = decide(triage, story_articles(conn, story_id), web_evidence(conn, story_id))
     latest = current(conn, story_id)
     if latest is None or (latest["label"], latest["reason"]) != (label, reason):
         conn.execute(

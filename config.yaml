@@ -53,6 +53,43 @@ claims:
   max_sonnet_checks_per_round: 5   # cap on careful final decisions per round (controls cost)
   candidates_per_article: 5   # most open claims compared with one new article
 
+# --- Web search for corroboration (Stage 3; Tavily free plan: 1,000 searches/month, no card) ---
+search:
+  enabled: true               # false = never search the web (labels then come from our feeds only)
+  min_importance: 40          # only search for stories scoring at least this (one search each)
+  wait_hours: 2               # wait this long before searching, so our own feeds can find other outlets for free
+                              # (alert-level stories are searched right away, before the 🚨 decision)
+  max_story_age_hours: 36     # never search for stories first seen longer ago than this
+  max_per_round: 5            # most searches in one round
+  max_per_day: 30             # most searches per day (your clock); 30 x 31 days stays under the free plan
+  monthly_limit: 950          # hard stop for the month (Tavily's free plan allows 1,000)
+  max_results: 8              # pages returned per search (all cost the same 1 credit)
+  snippet_chars: 400          # longest text kept per page (controls the AI cost of judging them)
+  days_before: 3              # search pages published from this many days before we first saw the story
+  max_failed_attempts: 2      # give up on a story after this many failed searches
+  skip_domains:               # never count these: social media, video, and directory pages add no reporting
+    - facebook.com
+    - instagram.com
+    - youtube.com
+    - linkedin.com
+    - x.com
+    - twitter.com
+    - tiktok.com
+    - reddit.com
+    - threads.net
+    - tavily.com              # the search service's own company-profile pages
+  aggregator_domains:         # sites that mostly republish others' stories: never counted as independent
+    - yahoo.com
+    - msn.com
+    - aol.com
+    - newsbreak.com
+    - flipboard.com
+    - techmeme.com
+    - ground.news
+    - biggo.com
+    - binance.com
+    - advfn.com
+
 # --- Topics Signality watches, and how much to favor each ---
 topics:
   model_releases: 1.0         # new AI models and major updates

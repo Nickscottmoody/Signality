@@ -6,8 +6,15 @@ import calendar
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import ai, bias, db, validity
+from . import ai, bias, db, search, validity
 from .settings import load_config
+
+
+# Stories whose CURRENT label rests on web-search evidence.
+UPGRADED_SQL = (
+    "SELECT COUNT(*) FROM story_validity WHERE id IN (SELECT MAX(id) FROM story_validity GROUP BY story_id)"
+    " AND label IN ('likely', 'confirmed', 'disputed') AND reason LIKE '%web search%'"
+)
 
 
 def _ago(iso):
@@ -43,6 +50,11 @@ def report(conn, cfg):
         f" (limit {cfg['importance']['alert_cap_per_day']})",
         f"  digest sent         {'yes' if one('SELECT COUNT(*) FROM deliveries WHERE kind = ? AND sent_at >= ?', 'digest', day_start) else 'not yet'}"
         f" (due {cfg['digest']['send_hour']}:00)",
+        "",
+        "Web search (corroboration)",
+        f"  searches            {search.usage(conn, cfg)['today']} today (limit {cfg['search']['max_per_day']}),"
+        f" {search.usage(conn, cfg)['month']} this month (limit {cfg['search']['monthly_limit']})",
+        f"  labels upgraded     {one(UPGRADED_SQL)} stories now ✅/🟢/🔴 thanks to pages web search found",
         "",
         "AI spending",
         f"  today               ${today_cost:.3f}",

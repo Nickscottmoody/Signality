@@ -5,7 +5,8 @@ Read this at the start of every session.
 ## Start here (new session checklist)
 
 **Where we are:** Stages 1, 2a, 2b, 2c are complete and live (2c finished Nov 9: chat commands, /profile,
-"🎯 How it affects you"). **Next: Stage 3** (see "Stage 3 — what to build" below).
+"🎯 How it affects you"). **Stage 3 in progress** (step 1 corroboration search built Nov 9; see the
+Stage 3 plan under "Current state").
 First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive as one message, look right, and
 did any 🎯 note fit him? (This finishes his task #10.) Fix anything wrong before Stage 3.
 
@@ -38,6 +39,9 @@ did any 🎯 note fit him? (This finishes his task #10.) Fix anything wrong befo
 - Sources: **17** (Washington Examiner added for balance); lean from AllSides (checked 2026-11-09).
 - "🎯 How it affects you": **strict bar** (~3 in 10 stories; generic market/hiring links skipped), 1-2 sentences.
 - Budget **$10/month**; expected running cost ~$2-3/month (`python -m signality.status`).
+- Search service (task #11, Nov 9): **Tavily**, free plan (1,000 searches/month), **no card** so it can
+  never charge; cap searches/day in config to stay under. Exa was the alternative ($10/month free credit).
+  Key in `.env` as `TAVILY_API_KEY`.
 
 **Recovered from the first session (Stages 1-2b), not recorded elsewhere**
 - Preferences: blank line between source links and the note on 🚨 alerts (keep the alert format, he likes
@@ -254,6 +258,31 @@ digest → ~$0.45/month. Preview without sending: `python -m signality.impact --
 **Live** (restart 20:17 CT, migration 12 applied). **Decision (Nicholas, Nov 9): keep the strict bar** (~3 in
 10 stories get a note). Open: his review of the first real notes (task #10), starting with the Nov 10 digest.
 
+**Stage 3 plan (5 steps):** 1) corroboration search on single-source stories · 2) the same search for
+open claims (more 🧾 receipts) · 3) developing stories: follow a saga, send updates (replaces "➕ N related")
+· 4) 👍/👎 buttons → preference suggestions Nicholas approves (task #12) · 5) `/settings` `/threshold`
+`/alertcap` `/mute` `/unmute`.
+
+**Stage 3, Step 1 — done (code), waiting for restart.** Nicholas chose **Tavily** (task #11 done: free
+plan, no card, key in `.env` as `TAVILY_API_KEY`, verified with a test search). `search.py` (Tavily over
+`requests`, topic=news, 1 credit/search, usage counted from `web_searches`; caps `search.max_per_day` 30 and
+`search.monthly_limit` 950) + `corroborate.py` (picks 🟡/🟠 stories ≥40 importance, ≤36h old, waits 2h so
+feeds can find outlets for free — alert-level stories searched at once, before the 🚨 decision; ONE search
+per story; Haiku judges each page: own_reporting / repeats_other / primary / official_confirmation / denial
+/ not_same_event / low_quality / unclear). Code rules overrule the model where it slipped in testing:
+aggregators (Yahoo, MSN, …) never count; "primary" must be the organization's own site (a news site quoting
+Meta's blog was called primary); a site judged both "own" and "copy" gets no credit (Kitco/Yahoo); sister
+sites (Bloomberg Law for Bloomberg) and social/video/directory pages are excluded. Prompt fixes: "the
+headline's specific news must match, not its background" (a CNBC page about the Marvell deal had counted for
+a story about betting odds on the deal); wire services under their own name = own reporting. Migration 13:
+`web_searches` + `web_results` (subject_type story|claim, every page kept with the verdict and why).
+`validity.decide` adds web outlets (by name, never double-counting a feed outlet); reasons say "(X found by
+web search)" or "Web search found no independent confirmation yet." Found pages are linked in messages.
+Tested on 8 real stories (13 searches): #668 ✅ (Nvidia's own board statement), #708 🟢 (BBC + Reuters),
+#721 🟢, #724 🟢, others correctly unchanged. Cost: ~$0.0005 AI per search → ≤$0.45/month at the cap.
+`python -m signality.corroborate --list` / `--story N`. 106 tests.
+Note: until the restart, the old service relabels stories without web evidence (harmless flip-flop rows).
+
 ## How to run / operate
 | Do this | Command (from the project folder) |
 |---|---|
@@ -268,6 +297,8 @@ digest → ~$0.45/month. Preview without sending: `python -m signality.impact --
 | Haiku vs. Sonnet report | `./.venv/bin/python -m signality.compare` |
 | Run tests | `./.venv/bin/python -m pytest -q` |
 | Preview "🎯 How it affects you" notes | `./.venv/bin/python -m signality.impact --preview 10` |
+| Which stories web search checks next | `./.venv/bin/python -m signality.corroborate --list` |
+| Search one story now (1 credit) | `./.venv/bin/python -m signality.corroborate --story 123` |
 
 **After changing any code, restart the service** — a running program keeps using the old code.
 `config.yaml` changes do NOT need a restart; the agent rereads it every round.

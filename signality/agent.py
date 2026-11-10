@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, db, delivery, fetcher, profile, resolution, telegram_bot, triage, validity
+from . import ai, corroborate, db, delivery, fetcher, profile, resolution, search, telegram_bot, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -68,6 +68,25 @@ def one_round():
         log.warning("triage skipped: %s", e)
     except Exception:
         log.exception("triage round crashed; will try again next round")
+
+    if cfg.get("search", {}).get("enabled"):
+        try:  # single-source stories: look for other outlets on the web (before any 🚨 decision)
+            conn = db.connect(cfg["storage"]["db_path"])
+            c = corroborate.run(conn, cfg)
+            used = search.usage(conn, cfg)
+            conn.close()
+            if c["searched"] or c["failed"]:
+                log.info("search: %d stories searched, %d labels changed, %d failed | $%.4f AI | "
+                         "%d/%d searches today, %d/%d this month%s",
+                         c["searched"], c["upgraded"], c["failed"], c["cost_usd"],
+                         used["today"], cfg["search"]["max_per_day"], used["month"], cfg["search"]["monthly_limit"],
+                         f" | stopped: {c['stopped']}" if c["stopped"] else "")
+            for change in c["changes"]:
+                log.info("  label %s -> %s: %s", change["before"], change["after"], change["headline"][:80])
+        except ai.BudgetExceeded as e:
+            log.warning("search skipped: %s", e)
+        except Exception:
+            log.exception("search round crashed; will try again next round")
 
     if cfg["claims"]["resolve_enabled"]:
         try:

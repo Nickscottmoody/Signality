@@ -295,6 +295,41 @@ MIGRATIONS = [
         UNIQUE (user_id, story_id, kind)
     );
     """,
+    # 13 - Stage 3: web searches for corroboration. A search is about one subject (a story now,
+    #      a claim in the next step); every result is kept with the model's verdict on it, so a
+    #      label upgrade can always be traced back to the pages that caused it.
+    """
+    CREATE TABLE web_searches (
+        id              INTEGER PRIMARY KEY,
+        subject_type    TEXT NOT NULL,      -- story | claim
+        subject_id      INTEGER NOT NULL,
+        provider        TEXT NOT NULL,      -- e.g. 'tavily'
+        query           TEXT NOT NULL,
+        searched_at     TEXT NOT NULL,
+        credits         INTEGER NOT NULL DEFAULT 0,  -- search-service credits used (free plan has a monthly limit)
+        ok              INTEGER NOT NULL,   -- 0 = the search failed (error kept below)
+        error           TEXT,
+        result_count    INTEGER NOT NULL DEFAULT 0,
+        check_cost_usd  REAL NOT NULL DEFAULT 0     -- AI cost of judging the results
+    );
+    CREATE INDEX idx_web_searches_subject ON web_searches(subject_type, subject_id);
+
+    CREATE TABLE web_results (
+        id              INTEGER PRIMARY KEY,
+        search_id       INTEGER NOT NULL REFERENCES web_searches(id),
+        url             TEXT NOT NULL,
+        domain          TEXT NOT NULL,      -- e.g. 'cnbc.com' (kept for future source track records)
+        outlet          TEXT NOT NULL,      -- our source name if we follow it, else the domain
+        title           TEXT,
+        published_at    TEXT,
+        snippet         TEXT,
+        basis           TEXT,               -- the model's verdict: own_reporting | repeats_other | primary |
+                                            -- official_confirmation | denial | not_same_event | low_quality | unclear
+        original_outlet TEXT,               -- for repeats_other: whose report it repeats
+        why             TEXT                -- the model's short reason, for review
+    );
+    CREATE INDEX idx_web_results_search ON web_results(search_id);
+    """,
 ]
 
 

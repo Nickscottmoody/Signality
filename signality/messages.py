@@ -86,6 +86,8 @@ def story_card(conn, story_id):
         """,
         (story_id,),
     ).fetchall()
+    web = validity.web_evidence(conn, story_id) or {"results": []}
+    sources = list(sources) + [(r["outlet"], r["url"]) for r in web["results"]]  # pages web search found
     seen, unique = set(), []
     for name, url in sources:  # one link per outlet
         if name not in seen:

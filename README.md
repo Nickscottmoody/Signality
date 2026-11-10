@@ -27,8 +27,8 @@ Most news tools summarize. Signality keeps a record.
 ## How it works
 
 ```
-   17 news sources
-         │  every 15 minutes
+   17 news sources          + Tavily web search for
+         │  every 15 minutes    single-source stories
          ▼
    ┌───────────┐   non-AI stories + duplicates removed (free, no AI)
    │  Fetcher  │──────────────────────────┐
@@ -117,6 +117,23 @@ The model rates four factors from 1 to 5; the code does the math.
 
 Company performance claims are marked **self-reported** until independently verified.
 Unverified and Disputed stories never go out as alerts — digest only, clearly labeled.
+
+### Corroboration search
+
+When only one outlet has an important story, Signality runs **one web search**
+([Tavily](https://tavily.com), free plan) looking for other outlets. Claude Haiku judges each
+page it finds (own reporting, a copy of someone else's report, the organization's own page,
+an on-record confirmation, a denial, or a different event), then fixed rules in code
+decide the label:
+
+- Aggregators (Yahoo, MSN…), sister sites (Bloomberg Law for Bloomberg), and social media never count.
+- "The organization's own page" must really be its own site, not a news site quoting its blog.
+- A site that carries both its own reporting and copies of others' gets no credit.
+
+The pages that changed a label are linked in the message, and the reason says which outlets
+web search found. Alert-level stories are searched **before** the 🚨 decision; others wait a
+couple of hours so the regular feeds can find other outlets for free. Hard limits per day and
+per month keep it inside the free plan.
 
 ## What arrives on your phone
 
@@ -216,12 +233,13 @@ sources, budget, models — lives in `config.yaml` with a comment explaining eac
 
 ## Tech
 
-Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for high-stakes steps)
+Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for high-stakes steps) · Tavily web search
 
 ## Status
 
 Stages 1, 2a, 2b complete and live ✅ (fetching, scoring, alerts, digest, claim tracking with receipts,
 bias audit). Stage 2c built: two-way chat, the onboarding interview and profile commands, and personal impact notes.
+Stage 3 in progress: corroboration search on single-source stories built.
 See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |
