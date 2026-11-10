@@ -124,6 +124,12 @@ profile:
   max_words: 150              # longest the saved profile may be (shorter = cheaper notes)
   checkin_days: 90            # how often Siggy asks whether anything in your profile has changed
 
+# --- "🎯 How it affects you" notes (written by the high_stakes model from your profile) ---
+impact_notes:
+  enabled: true               # false = no personal notes (saves ~$0.30-0.50/month)
+  max_words: 45               # longest a note may be (about 2 sentences)
+  digest_max_notes: 3         # at most this many digest stories get a note (only the strongly relevant ones)
+
 # --- AI keyword filter (free, runs in code before any paid AI step) ---
 # Sources marked ai_filter: true cover more than AI, so their stories must mention
 # at least one of these words in the headline or preview to be kept.

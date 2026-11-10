@@ -145,6 +145,15 @@ account is answered, and only in a private chat, so personal details never reach
 `/profile` runs a 12-question onboarding interview (tap buttons where possible). Sonnet condenses the
 answers into a short profile (under 150 words) that the user approves or edits before it's saved. It
 lives only in the local database and powers the "🎯 How it affects you" notes.
+`/myprofile`, `/editprofile` and `/deleteprofile` manage it, and Siggy checks in every 3 months.
+
+## 🎯 How it affects you
+
+After "Why it matters", 🚨 alerts get a 1-2 sentence note on how the story connects to the reader's
+profile, and the few digest stories that are strongly relevant get one too. The bar is deliberately high:
+no note is written when the only link is generic ("the market fell, so tech hiring might slow"), every
+decision to write or skip is stored with its reason, and notes lay out possibilities rather than telling
+the reader what to do. Rumors are never personalized, and notes never appear in a public channel.
 
 ## Meet Siggy
 
@@ -212,7 +221,7 @@ Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for 
 ## Status
 
 Stages 1, 2a, 2b complete and live ✅ (fetching, scoring, alerts, digest, claim tracking with receipts,
-bias audit). Stage 2c in progress: two-way chat and the onboarding interview are built.
+bias audit). Stage 2c built: two-way chat, the onboarding interview and profile commands, and personal impact notes.
 See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |

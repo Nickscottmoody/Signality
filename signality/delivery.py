@@ -15,7 +15,7 @@ Safety rules from the brief:
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import ai, alert_check, db, messages, receipts, scoring, telegram, validity
+from . import ai, alert_check, db, impact, messages, receipts, scoring, telegram, validity
 from .dedup import key_words, related
 from .settings import secret
 
@@ -130,6 +130,7 @@ def send_immediate(conn, cfg):
         if tier == "silent" and not silent_messages_on(cfg):
             continue  # not alert-worthy after all: it waits for the morning digest
         card = messages.story_card(conn, story_id)
+        card.impact_note = impact.for_story(conn, cfg, recipient(), card, kind=tier)
         message = messages.Message(kind=tier, silent=tier != "alert", image="alert" if tier == "alert" else None,
                                    cards=[card], note=note)
         _send(conn, cfg, message, story_id=story_id, note=note or None)
@@ -211,6 +212,18 @@ def build_digest(conn, cfg):
                             cards=confirmed, unconfirmed=unconfirmed, receipts=pending_receipts)
 
 
+def add_impact_notes(conn, cfg, message):
+    """"🎯 How it affects you" on the strongly relevant digest stories.
+
+    Only stories that will fit in the one message are considered (no paying for notes nobody
+    sees), and only confirmed ones: a rumor is never personalized.
+    """
+    _, shown, _ = telegram.fit_digest(message)
+    notes = impact.for_digest(conn, cfg, recipient(), shown)
+    for card in message.cards:
+        card.impact_note = notes.get(card.story_id, "")
+
+
 def maybe_send_digest(conn, cfg):
     """Send today's digest once, at or after the configured hour. Returns stories included."""
     now = local_now(cfg)
@@ -218,6 +231,7 @@ def maybe_send_digest(conn, cfg):
     if now.hour < cfg["digest"]["send_hour"] or db.get_state(conn, key):
         return 0
     message = build_digest(conn, cfg)
+    add_impact_notes(conn, cfg, message)
     included = []
     if message.cards or message.unconfirmed or message.receipts:
         sent = telegram.deliver(message, cfg)

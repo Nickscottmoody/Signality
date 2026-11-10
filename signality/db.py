@@ -278,6 +278,23 @@ MIGRATIONS = [
         updated_at      TEXT NOT NULL
     );
     """,
+    # 12 - Stage 2c: "🎯 How it affects you" notes, per user per story. Skips are stored too
+    #      (note empty + the reason), so a story is never paid for twice and every decision
+    #      can be reviewed.
+    """
+    CREATE TABLE impact_notes (
+        id              INTEGER PRIMARY KEY,
+        user_id         INTEGER NOT NULL REFERENCES users(id),
+        story_id        INTEGER NOT NULL REFERENCES stories(id),
+        kind            TEXT NOT NULL,      -- alert | digest | preview
+        note            TEXT,               -- empty = skipped (no real connection)
+        connects_to     TEXT,               -- which part of the profile it connects to
+        reason          TEXT,               -- why it was written or skipped
+        model           TEXT NOT NULL,
+        created_at      TEXT NOT NULL,
+        UNIQUE (user_id, story_id, kind)
+    );
+    """,
 ]
 
 

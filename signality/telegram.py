@@ -117,6 +117,10 @@ def render_card(card, kind, note=""):
         "",
         f"<b>Why it matters:</b> {_e(card.why_it_matters)}",
         "",
+    ]
+    if card.impact_note:
+        lines += [f"🎯 <b>How it affects you:</b> {_e(card.impact_note)}", ""]
+    lines += [
         f"{card.label_text}: {_e(card.label_reason)}",
     ]
     if card.self_reported:
@@ -136,7 +140,8 @@ def render_digest_item(n, card):
     extras += " · 🏷️ self-reported" if card.self_reported else ""
     more = len(card.related_ids)
     related = f"\n➕ {more} related {'story' if more == 1 else 'stories'} on this" if more else ""
-    return (f"<b>{n}. {_e(card.headline)}</b>\n{_e(card.why_it_matters)}\n"
+    note = f"🎯 {_e(card.impact_note)}\n" if card.impact_note else ""
+    return (f"<b>{n}. {_e(card.headline)}</b>\n{_e(card.why_it_matters)}\n{note}"
             f"{card.label_text} · 📊 {card.importance}{extras} · {_links(card.sources, 2)}{related}")
 
 

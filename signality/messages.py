@@ -26,6 +26,7 @@ class StoryCard:
     topics: list
     sources: list           # [(outlet name, url), ...]
     related_ids: list = field(default_factory=list)  # digest: other stories on the same saga, folded in
+    impact_note: str = ""   # "🎯 How it affects you" (personal: never show in a public channel)
 
     @property
     def label_text(self):

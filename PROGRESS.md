@@ -223,6 +223,18 @@ answer → Sonnet updates the saved profile from the change, keeping earlier han
 something / ↩️ Keep my old profile), `/deleteprofile` (needs a confirming tap; erases profile + answers).
 Check-in: the agent loop sends "🎯 Quick check-in" when `next_checkin_at` passes, only 8am-8pm Central,
 then schedules the next one 90 days out (no nagging if ignored). Dates shown on Nicholas's clock. 81 tests.
+**Live** (restart 20:06 CT); Nicholas confirmed /myprofile and /editprofile work. ✅
+
+**Stage 2c, Step 4 — done (code), waiting for restart.** "🎯 How it affects you" (`impact.py`, migration 12
+`impact_notes`: per user per story, skips stored with their reason so nothing is paid twice). 🚨 (and 🔔 if
+re-enabled): one Sonnet call per story (`impact_note`), shown after "Why it matters". Digest: ONE Sonnet call
+(`impact_digest`) over only the stories that fit in the message, confirmed ones only (never personalize a
+rumor), max `impact_notes.digest_max_notes` (3). Rules: specific link to the profile or skip; market/valuation
+moves and "hiring might slow" don't qualify alone; 1-2 sentences; options not instructions; uncertainty
+inside the sentence; code lets ~1 in 3 alert notes end with a question (story_id % 3), digest at most one.
+First prompt was too loose (7/10 notes, three near-identical "market rout → hiring" notes, a question on
+almost every one) → tightened: 3/10, all specific. Measured: ~$0.0025 per alert note, $0.007-0.012 per
+digest → ~$0.45/month. Preview without sending: `python -m signality.impact --preview 10`. 89 tests.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
@@ -237,6 +249,7 @@ then schedules the next one 90 days out (no nagging if ignored). Dates shown on 
 | Health + cost check | `./.venv/bin/python -m signality.status` |
 | Haiku vs. Sonnet report | `./.venv/bin/python -m signality.compare` |
 | Run tests | `./.venv/bin/python -m pytest -q` |
+| Preview "🎯 How it affects you" notes | `./.venv/bin/python -m signality.impact --preview 10` |
 
 **After changing any code, restart the service** — a running program keeps using the old code.
 `config.yaml` changes do NOT need a restart; the agent rereads it every round.
