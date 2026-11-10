@@ -2,6 +2,53 @@
 
 Read this at the start of every session.
 
+## Start here (new session checklist)
+
+**Where we are:** Stages 1, 2a, 2b are complete and live. **Next: Stage 2c** (see bottom of this section).
+First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive and look right?
+
+**Working rules we settled on**
+- Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
+- **Nicholas runs** `./scripts/install_mac_service.sh` (restart) and anything that publishes (Claude's
+  permissions block both). Claude can commit and `git push` normally.
+- **Code change → service restart needed. `config.yaml` change → no restart** (reread every round).
+- Commit + push after every working step; update this file; scan staged files so `.env` / `data/` never ship.
+- Python: `./.venv/bin/python`. This Mac's Python can't verify HTTPS certs → always fetch with `requests`.
+- Claude API code: load the `claude-api` skill first; SDK pinned `anthropic==1.17.0`; every call goes
+  through `signality/ai.py` (`ask_json`: priced, logged, budget-guarded).
+- Never ask for secrets in chat; they live only in `.env`.
+- Phone previews: mark "🧪 PREVIEW" and don't record them as deliveries. When re-running AI on real stories
+  for tests, use stories first seen >12h ago (fresh ones can trigger real alerts).
+- Every Telegram message must arrive as ONE notification (photo+caption, or text with Siggy shown above it).
+- Platform-ready rules in CLAUDE.md: core never imports Telegram; users = platform + account id; per-user
+  settings/profile in the DB, config.yaml = defaults.
+
+**Nicholas's decisions (don't re-litigate)**
+- Models: **Haiku** = triage, claim extraction, first-pass checks. **Sonnet** = 🚨 alert checks, claim
+  decisions. **Opus not used** (tested in 2b: no gain at 2.3× cost).
+- Alerts: cutoff **65**, max **5/day**, only news first seen ≤12h, Sonnet must agree, one alert per saga/24h.
+- Topic bonus **×1.1** (jobs, finance_analytics). **🔔 silent messages off** (`delivery.silent_messages:
+  false`) → 50-64 lead the digest.
+- Digest **8am America/Chicago**, covers everything since the last digest (max 48h), ONE message (~12 stories),
+  related stories folded ("➕ N related").
+- Receipts: in the digest; **live** if the claim's saga got a 🚨. Only claims genuinely in doubt are tracked;
+  claim text is a plain fact, claimant kept separate; one record per claim (`same_as`).
+- Sources: **17** (Washington Examiner added for balance); lean from AllSides (checked 2026-11-09).
+- Budget **$10/month**; expected running cost ~$2-3/month (`python -m signality.status`).
+
+**Stage 2c — what to build (from CLAUDE.md)**
+- `/profile` onboarding interview in Telegram: ~12 questions, one at a time, tap buttons where possible.
+  Topics listed in CLAUDE.md. Save a short profile (<150 words), show it, Nicholas approves/edits before saving.
+- Commands `/profile`, `/myprofile`, `/editprofile`, `/deleteprofile`; ask every 3 months if anything changed.
+- **Telegram is send-only today.** Commands need two-way messaging (`python-telegram-bot` is already in
+  requirements.txt). Accept commands only from `TELEGRAM_USER_ID`. Keep it platform-ready (handlers thin,
+  logic in core).
+- Profile stored locally only (DB under `data/`, which is gitignored), per user, never in the public channel.
+- "🎯 How it affects you": Sonnet writes 1-2 sentences after "Why it matters" on 🚨 alerts (and 🔔 if ever
+  re-enabled); digest items only when strongly relevant; skip when there's no real connection; lay out
+  options, never instructions; sometimes end with a question.
+- Nicholas's **task #10**: do the interview, review the profile and the first ~10 notes.
+
 ## Current state
 **Stage 1, Step 1 — done.** Project is live on GitHub (public):
 https://github.com/Nickscottmoody/Signality
