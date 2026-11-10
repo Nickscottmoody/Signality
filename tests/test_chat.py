@@ -78,8 +78,13 @@ def test_a_broken_update_is_logged_not_raised(monkeypatch):
     telegram_bot.process_update({"message": {"from": {"id": 1}}}, None, CFG)  # no chat: must not raise
 
 
-def test_first_run_skips_messages_sent_before_siggy_listened():
+def test_first_run_skips_old_messages_but_answers_recent_ones():
+    now = 1_000_000
+    old, recent = {"message": {"date": now - 3600}}, {"message": {"date": now - 60}}
     conn = memory_db()
-    offset = telegram_bot.skip_backlog(conn, call=lambda m, d: [{"update_id": 40}, {"update_id": 41}])
-    assert offset == 42 and db.get_state(conn, telegram_bot.OFFSET_KEY) == "42"
-    assert telegram_bot.skip_backlog(memory_db(), call=lambda m, d: []) == 0
+    updates = [{"update_id": 40, **old}, {"update_id": 41, **old}, {"update_id": 42, **recent}]
+    assert telegram_bot.skip_backlog(conn, call=lambda m, d: updates, now=now) == 42  # 42 still answered
+    assert db.get_state(conn, telegram_bot.OFFSET_KEY) == "42"
+    only_recent = [{"update_id": 50, **recent}]
+    assert telegram_bot.skip_backlog(memory_db(), call=lambda m, d: only_recent, now=now) == 50
+    assert telegram_bot.skip_backlog(memory_db(), call=lambda m, d: [], now=now) == 0

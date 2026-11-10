@@ -174,8 +174,8 @@ buttons + profile approval · 3) `/myprofile` `/editprofile` `/deleteprofile` + 
 sources ok, only a one-round Wi-Fi blip at 15:35; today $0.33 (incl. one-off tests), month $0.50, pace
 $1.67/month. Two-way chat: `chat.py` (core: commands registry, `/start`, `/help`, button handler;
 `/profile` etc. listed as "coming soon"), `telegram_bot.py` (long polling in a background thread of the
-agent; answers only `TELEGRAM_USER_ID` in a private chat; removes tapped buttons; skips the backlog on
-first run; offset in `app_state`; logs once per outage; sets the "/" command menu). `Reply` added to
+agent; answers only `TELEGRAM_USER_ID` in a private chat; removes tapped buttons; first run skips
+messages older than 15 min but answers newer ones; offset in `app_state`; logs once per outage; sets the "/" command menu). `Reply` added to
 `messages.py`; `send_message`/`send_photo` take tap buttons. `chat.enabled` in config (no restart needed
 to switch). Database switched to WAL so the chat thread and news loop don't block each other.
 Note: only ONE program can listen to the bot at a time — don't run `python -m signality.telegram_bot`

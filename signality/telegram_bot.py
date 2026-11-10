@@ -10,6 +10,7 @@ chat, so personal details can never land in a group or the public channel.
 import json
 import logging
 import threading
+import time
 
 import requests
 
@@ -80,10 +81,17 @@ def set_command_menu(call=telegram._call):
     call("setMyCommands", {"commands": json.dumps(commands)})
 
 
-def skip_backlog(conn, call=telegram._call):
-    """First run only: ignore messages sent before Siggy could listen."""
+BACKLOG_MINUTES = 15  # first run: still answer messages sent this recently
+
+
+def skip_backlog(conn, call=telegram._call, now=None):
+    """First run only: ignore old messages, but answer ones from the last few minutes
+    (e.g. a /help sent just before the restart)."""
+    now = now or time.time()
     updates = call("getUpdates", {"timeout": 0})
-    offset = max((u["update_id"] for u in updates), default=-1) + 1
+    old = [u["update_id"] for u in updates
+           if u.get("message", {}).get("date", 0) < now - BACKLOG_MINUTES * 60]
+    offset = max(old, default=min((u["update_id"] for u in updates), default=0) - 1) + 1
     db.set_state(conn, OFFSET_KEY, str(offset))
     return offset
 
