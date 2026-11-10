@@ -4,8 +4,10 @@ Read this at the start of every session.
 
 ## Start here (new session checklist)
 
-**Where we are:** Stages 1, 2a, 2b are complete and live. **Stage 2c in progress** (plan + status at the
-bottom of "Current state"). First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive and look right?
+**Where we are:** Stages 1, 2a, 2b, 2c are complete and live (2c finished Nov 9: chat commands, /profile,
+"🎯 How it affects you"). **Next: Stage 3** (see "Stage 3 — what to build" below).
+First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive as one message, look right, and
+did any 🎯 note fit him? (This finishes his task #10.) Fix anything wrong before Stage 3.
 
 **Working rules we settled on**
 - Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
@@ -60,7 +62,20 @@ bottom of "Current state"). First thing to ask Nicholas: did the first 8am diges
   parse digits; schema/system changes invalidate the prompt cache once; local HTML report previews need
   `python3 -m http.server`; Reuters/AP via Google News are headline-only ("partial").
 
-**Stage 2c — what to build (from CLAUDE.md)**
+**Stage 3 — what to build (from CLAUDE.md), one step at a time**
+- (a) Search for corroboration on single-source stories and open claims. Needs Nicholas's **task #11**:
+  pick a search service (e.g. Tavily or Exa: compare current prices/free tiers first, recommend one), he
+  creates the account and puts the key in `.env` (tell him the exact variable name; never in chat).
+  Also: "never send an Unverified story as a 🚨 without investigating it first" becomes real here.
+  Count only independent sources (echoes = one source). Keep within the $10/month budget; measure cost.
+- (b) Track developing stories (sagas): send updates and receipts. Replaces the stopgap "➕ N related"
+  folding and the "one alert per saga per 24h" rule (see Open issues: Developing stories).
+- (c) 👍/👎 buttons on stories → the agent suggests preference changes (topics, thresholds), Nicholas
+  approves (**task #12**). Two-way chat already exists (`chat.py` + `telegram_bot.py`, button codes ≤64
+  bytes, prefix per feature like `pf:`); per-user settings belong in the DB, config.yaml = defaults.
+- Also in the brief, not built yet: `/threshold`, `/alertcap`, `/mute`, `/unmute`, `/settings` commands.
+
+**Stage 2c — what was built (from CLAUDE.md)**
 - `/profile` onboarding interview in Telegram: ~12 questions, one at a time, tap buttons where possible.
   Topics listed in CLAUDE.md. Save a short profile (<150 words), show it, Nicholas approves/edits before saving.
 - Commands `/profile`, `/myprofile`, `/editprofile`, `/deleteprofile`; ask every 3 months if anything changed.
