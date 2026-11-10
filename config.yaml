@@ -114,6 +114,11 @@ delivery:
   silent_messages: false      # false = 🔔 stories (50-74) wait for the morning digest instead of arriving during the day
   image_on_silent: false      # also attach yellow Siggy to every 🔔 message (busier chat)
 
+# --- Chat: commands you send Siggy in Telegram (only your TELEGRAM_USER_ID is answered) ---
+chat:
+  enabled: true               # false = Siggy stops listening for commands (news and alerts keep working)
+  long_poll_seconds: 50       # how long each "any new messages?" check waits open; replies are still instant
+
 # --- AI keyword filter (free, runs in code before any paid AI step) ---
 # Sources marked ai_filter: true cover more than AI, so their stories must mention
 # at least one of these words in the headline or preview to be kept.

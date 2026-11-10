@@ -62,6 +62,18 @@ class Message:
     note: str = ""                  # small extra line, e.g. why an alert was sent quietly
 
 
+@dataclass
+class Reply:
+    """Siggy's answer to something the user typed or tapped in chat.
+
+    Plain text only: the platform renderer handles escaping and formatting.
+    """
+    text: str
+    title: str = ""                 # shown in bold above the text
+    buttons: list = field(default_factory=list)  # rows of (label, data) tap buttons
+    image: str | None = None        # key into config siggy.images, or None for text only
+
+
 def story_card(conn, story_id):
     t = conn.execute("SELECT * FROM story_triage WHERE story_id = ? AND purpose = 'live'", (story_id,)).fetchone()
     label = validity.current(conn, story_id) or validity.update(conn, story_id)

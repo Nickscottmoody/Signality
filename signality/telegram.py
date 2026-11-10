@@ -1,7 +1,7 @@
 """Sends Siggy's messages to Telegram.
 
 Uses Telegram's Bot API directly with requests (which has its own HTTPS
-certificates). Two-way chat commands arrive in a later stage.
+certificates). Incoming chat commands are handled by telegram_bot.py.
 
 Send a test message from the project folder:
     ./.venv/bin/python -m signality.telegram
@@ -22,12 +22,12 @@ class TelegramError(Exception):
     """Telegram refused a request. The message says why."""
 
 
-def _call(method, data, files=None):
+def _call(method, data, files=None, timeout=30):
     token = secret("TELEGRAM_BOT_TOKEN")
     if not token:
         raise TelegramError("TELEGRAM_BOT_TOKEN is missing from .env")
     response = requests.post(API.format(token=token, method=method),
-                             data=data, files=files, timeout=30)
+                             data=data, files=files, timeout=timeout)
     body = response.json()
     if not body.get("ok"):
         raise TelegramError(body.get("description", f"HTTP {response.status_code}"))
@@ -41,31 +41,50 @@ def _chat_id(chat_id):
     return chat_id
 
 
-def send_message(text, chat_id=None, silent=False, image_url=None):
+def keyboard(buttons):
+    """Rows of (label, data) -> Telegram's tap-button layout (as JSON), or None."""
+    if not buttons:
+        return None
+    for row in buttons:
+        for _, data in row:
+            if len(data.encode()) > 64:  # Telegram's limit for a button's hidden code
+                raise ValueError(f"button data too long: {data!r}")
+    return json.dumps({"inline_keyboard": [[{"text": label, "callback_data": data} for label, data in row]
+                                           for row in buttons]})
+
+
+def send_message(text, chat_id=None, silent=False, image_url=None, buttons=None):
     """Send a text message. Text may use simple HTML: <b>, <i>, <a href>.
 
     With image_url, Telegram shows that picture above the text, all in ONE message.
+    buttons: rows of (label, data) shown as tap buttons under the message.
     """
     preview = ({"url": image_url, "show_above_text": True, "prefer_large_media": True}
                if image_url else {"is_disabled": True})
-    return _call("sendMessage", {
+    data = {
         "chat_id": _chat_id(chat_id),
         "text": text,
         "parse_mode": "HTML",
         "disable_notification": silent,
         "link_preview_options": json.dumps(preview),
-    })
+    }
+    if buttons:
+        data["reply_markup"] = keyboard(buttons)
+    return _call("sendMessage", data)
 
 
-def send_photo(image, caption, chat_id=None, silent=False):
+def send_photo(image, caption, chat_id=None, silent=False, buttons=None):
     """Send one of Siggy's pictures with a caption (max 1024 characters)."""
+    data = {
+        "chat_id": _chat_id(chat_id),
+        "caption": caption,
+        "parse_mode": "HTML",
+        "disable_notification": silent,
+    }
+    if buttons:
+        data["reply_markup"] = keyboard(buttons)
     with open(ROOT / image, "rb") as f:
-        return _call("sendPhoto", {
-            "chat_id": _chat_id(chat_id),
-            "caption": caption,
-            "parse_mode": "HTML",
-            "disable_notification": silent,
-        }, files={"photo": f})
+        return _call("sendPhoto", data, files={"photo": f})
 
 
 # --- Rendering: platform-neutral Message -> Telegram HTML -------------------

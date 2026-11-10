@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, db, delivery, fetcher, resolution, triage, validity
+from . import ai, db, delivery, fetcher, resolution, telegram_bot, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -103,6 +103,7 @@ def main():
         one_round()
         return
     log.info("Signality agent started")
+    telegram_bot.start_in_background()  # answers chat commands while the news loop below runs
     while True:
         started = time.monotonic()
         one_round()

@@ -263,6 +263,9 @@ def connect(db_path):
     conn = sqlite3.connect(path, timeout=30)  # wait if another run is writing
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL lets the chat listener and the news loop read and write at the same time.
+    # (SQLite-only setting; a larger database would simply skip it.)
+    conn.execute("PRAGMA journal_mode = WAL")
     migrate(conn)
     return conn
 

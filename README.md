@@ -135,6 +135,13 @@ whether it was summarized from a preview only, the four factor ratings, and link
 Messages are built in a platform-neutral form first and rendered for Telegram last, so other
 platforms can be added without changing the agent.
 
+## Talking to Siggy
+
+Siggy also listens. Send `/help` in Telegram to see his commands. Commands are decided in
+`signality/chat.py` (platform-neutral, users identified as `platform:account id`) and
+`signality/telegram_bot.py` only translates to and from Telegram. Only the owner's Telegram
+account is answered, and only in a private chat, so personal details never reach a group or channel.
+
 ## Meet Siggy
 
 | | |
@@ -200,7 +207,9 @@ Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for 
 
 ## Status
 
-Stage 1 complete ✅ (fetching, filtering, de-duplication, storage, Telegram, always-on). Stage 2a next. See [PROGRESS.md](PROGRESS.md).
+Stages 1, 2a, 2b complete and live ✅ (fetching, scoring, alerts, digest, claim tracking with receipts,
+bias audit). Stage 2c in progress: two-way chat is built; the onboarding interview is next.
+See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |
 |---|---|
