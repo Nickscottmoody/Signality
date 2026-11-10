@@ -31,6 +31,11 @@ def card(conn, event_id):
         (article_id,),
     ).fetchone()
     origin, evidence = link(c["article_id"]), link(e["evidence_article_id"])
+    if evidence is None and e["evidence_web_result_id"]:  # evidence a web search found
+        evidence = conn.execute(
+            "SELECT outlet AS name, url, COALESCE(published_at, ?) AS published_at FROM web_results WHERE id = ?",
+            (e["at"], e["evidence_web_result_id"]),
+        ).fetchone()
     headline = conn.execute(
         "SELECT headline FROM story_triage WHERE story_id = ? AND purpose = 'live'", (c["story_id"],)
     ).fetchone()

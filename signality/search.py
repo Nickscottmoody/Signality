@@ -65,23 +65,36 @@ def source_domains(conn, cfg):
     return found
 
 
-def usage(conn, cfg):
-    """Credits used today (your clock) and this month (UTC, when Tavily resets)."""
+def usage(conn, cfg, subject_type=None):
+    """Credits used today (your clock) and this month (UTC, when Tavily resets).
+
+    subject_type ('story' or 'claim') counts only that kind of search.
+    """
     now = datetime.now(ZoneInfo(cfg["digest"]["timezone"]))
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
     month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    kind = " AND subject_type = ?" if subject_type else ""
     count = lambda start: conn.execute(
-        "SELECT COALESCE(SUM(credits), 0) FROM web_searches WHERE provider = ? AND searched_at >= ?",
-        (PROVIDER, start.isoformat(timespec="seconds")),
+        "SELECT COALESCE(SUM(credits), 0) FROM web_searches WHERE provider = ? AND searched_at >= ?" + kind,
+        (PROVIDER, start.isoformat(timespec="seconds"), *([subject_type] if subject_type else [])),
     ).fetchone()[0]
     return {"today": count(day_start), "month": count(month_start)}
 
 
-def allowance(conn, cfg):
-    """How many more searches are allowed right now (0 = stop)."""
+def allowance(conn, cfg, subject_type=None):
+    """How many more searches are allowed right now (0 = stop).
+
+    Claims get their own daily share (search.claims_per_day) inside the overall daily limit,
+    so busy news days can't crowd them out, and stories get the rest.
+    """
     s = cfg["search"]
     used = usage(conn, cfg)
-    return max(0, min(s["max_per_day"] - used["today"], s["monthly_limit"] - used["month"]))
+    room = min(s["max_per_day"] - used["today"], s["monthly_limit"] - used["month"])
+    if subject_type == "claim":
+        room = min(room, s["claims_per_day"] - usage(conn, cfg, "claim")["today"])
+    elif subject_type == "story":
+        room = min(room, s["max_per_day"] - s["claims_per_day"] - usage(conn, cfg, "story")["today"])
+    return max(0, room)
 
 
 def search(query, cfg, *, start_date=None, exclude_domains=()):

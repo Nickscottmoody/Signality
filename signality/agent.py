@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, corroborate, db, delivery, fetcher, profile, resolution, search, telegram_bot, triage, validity
+from . import ai, claim_search, corroborate, db, delivery, fetcher, profile, resolution, search, telegram_bot, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -87,6 +87,23 @@ def one_round():
             log.warning("search skipped: %s", e)
         except Exception:
             log.exception("search round crashed; will try again next round")
+
+    if cfg.get("search", {}).get("enabled") and cfg["claims"]["resolve_enabled"]:
+        try:  # open claims: look for the outcome on the web instead of waiting for our feeds
+            conn = db.connect(cfg["storage"]["db_path"])
+            cs = claim_search.run(conn, cfg)
+            used = search.usage(conn, cfg, "claim")
+            conn.close()
+            if cs["searched"] or cs["failed"]:
+                log.info("claim search: %d claims searched, %d changes, %d failed | $%.4f AI | %d/%d claim searches today%s",
+                         cs["searched"], len(cs["changes"]), cs["failed"], cs["cost_usd"], used["today"],
+                         cfg["search"]["claims_per_day"], f" | stopped: {cs['stopped']}" if cs["stopped"] else "")
+            for change in cs["changes"]:
+                log.info("  claim -> %s: %s", change["change"], change["claim"][:90])
+        except ai.BudgetExceeded as e:
+            log.warning("claim search skipped: %s", e)
+        except Exception:
+            log.exception("claim search crashed; will try again next round")
 
     if cfg["claims"]["resolve_enabled"]:
         try:

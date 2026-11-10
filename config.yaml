@@ -62,6 +62,13 @@ search:
   max_story_age_hours: 36     # never search for stories first seen longer ago than this
   max_per_round: 5            # most searches in one round
   max_per_day: 30             # most searches per day (your clock); 30 x 31 days stays under the free plan
+  claims_per_day: 10          # of those, this many are kept for checking open claims (stories get the rest)
+  claims_per_round: 2         # most open claims searched in one round
+  claim_min_age_hours: 12     # first search for a claim waits this long (news needs time to develop)
+  claim_recheck_days: 3       # search again for a still-open claim after this many days
+  claim_slow_recheck_days: 14 # ...but only this often for plans not yet due and companies' own performance claims
+  claim_sonnet_per_round: 2   # most careful (Sonnet) decisions from web evidence in one round
+  evidence_char_cap: 2500     # longest text read from one evidence page for the careful decision (controls cost)
   monthly_limit: 950          # hard stop for the month (Tavily's free plan allows 1,000)
   max_results: 8              # pages returned per search (all cost the same 1 credit)
   snippet_chars: 400          # longest text kept per page (controls the AI cost of judging them)

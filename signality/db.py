@@ -334,6 +334,13 @@ MIGRATIONS = [
     """
     ALTER TABLE web_searches ADD COLUMN key_fact TEXT;
     """,
+    # 15 - Stage 3: web search for open claims. For a claim search, web_results.basis holds what the
+    #      page does to the claim (confirms, contradicts, supports...) and `independent` whether it has
+    #      its own sourcing. A claim change can now point at the web page that caused it.
+    """
+    ALTER TABLE web_results ADD COLUMN independent INTEGER;
+    ALTER TABLE claim_events ADD COLUMN evidence_web_result_id INTEGER REFERENCES web_results(id);
+    """,
 ]
 
 

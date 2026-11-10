@@ -273,7 +273,7 @@ def run(conn, cfg):
     summary = {"searched": 0, "upgraded": 0, "failed": 0, "cost_usd": 0.0, "changes": [], "stopped": None}
     if not cfg["search"]["enabled"]:
         return summary
-    room = min(search.allowance(conn, cfg), cfg["search"]["max_per_round"])
+    room = min(search.allowance(conn, cfg, "story"), cfg["search"]["max_per_round"])
     if room <= 0:
         summary["stopped"] = "daily or monthly search limit reached"
         return summary

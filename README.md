@@ -135,6 +135,13 @@ web search found. Alert-level stories are searched **before** the 🚨 decision;
 couple of hours so the regular feeds can find other outlets for free. Hard limits per day and
 per month keep it inside the free plan.
 
+**Open claims get searched too.** Instead of waiting for a feed to report the outcome, Siggy
+searches for each open claim every few days (less often for plans not yet due). Haiku sorts
+each page (confirms, contradicts, walked back, delayed, or just repeats it); if a page may settle
+the claim, Sonnet makes the final call after reading the page itself. The claim's own outlet,
+pages from before the claim was made, and aggregators never count, and the 🧾 receipt links
+the page that settled it.
+
 ## What arrives on your phone
 
 | | When | Looks like |
@@ -239,7 +246,7 @@ Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for 
 
 Stages 1, 2a, 2b complete and live ✅ (fetching, scoring, alerts, digest, claim tracking with receipts,
 bias audit). Stage 2c built: two-way chat, the onboarding interview and profile commands, and personal impact notes.
-Stage 3 in progress: corroboration search on single-source stories built.
+Stage 3 in progress: corroboration search on single-source stories and open claims built.
 See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |

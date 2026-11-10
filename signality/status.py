@@ -55,6 +55,9 @@ def report(conn, cfg):
         f"  searches            {search.usage(conn, cfg)['today']} today (limit {cfg['search']['max_per_day']}),"
         f" {search.usage(conn, cfg)['month']} this month (limit {cfg['search']['monthly_limit']})",
         f"  labels upgraded     {one(UPGRADED_SQL)} stories now ✅/🟢/🔴 thanks to pages web search found",
+        f"  claims              {search.usage(conn, cfg, 'claim')['today']} claim searches today (limit {cfg['search']['claims_per_day']}),"
+        f" {one('SELECT COUNT(*) FROM claim_events WHERE evidence_web_result_id IS NOT NULL AND event IN (?, ?)', 'resolved', 'label_change')}"
+        f" claim changes from web evidence",
         "",
         "AI spending",
         f"  today               ${today_cost:.3f}",
