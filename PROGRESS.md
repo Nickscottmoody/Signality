@@ -285,7 +285,7 @@ Tested on 8 real stories (13 searches): #668 ✅ (Nvidia's own board statement),
 "Law firms race to file suits against Nvidia" was "confirmed" by Nvidia's probe statement and pages about
 the stock drop (background, not the lawsuits). Fix: Haiku first writes the story's `key_fact` (stored,
 migration 14) and answers `reports_key_fact` per page; code drops any page that says no. Re-tested: #806
-back to 🟡 (correct); #668 ✅ and #681 🟢 still hold. 107 tests. **Needs another restart.**
+back to 🟡 (correct); #668 ✅ and #681 🟢 still hold. 107 tests. **Live** (restart 22:10 CT, migration 14 applied, clean round). ✅
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
