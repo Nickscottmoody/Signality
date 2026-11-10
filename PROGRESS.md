@@ -7,10 +7,13 @@ Read this at the start of every session.
 **Where we are:** Stages 1, 2a, 2b, 2c are complete and live (2c finished Nov 9: chat commands, /profile,
 "🎯 How it affects you"). **Stage 3 in progress** (step 1 story corroboration live Nov 9; step 2 claim
 search live Nov 9; next: step 3 developing stories; see the Stage 3 plan under "Current state").
-First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive as one message, look right, and
-did any 🎯 note fit him? (This finishes his task #10.) Also check the log for the first live
-`claim search:` lines. **Nicholas chose to start Stage 3 step 3 (developing stories) only after
-reviewing that digest**, since step 3 changes how the digest groups stories.
+**Task #10 done (Nov 10):** the first 8am digest arrived as ONE message, looked right, and the 🎯 note
+fit him. But a 🧾 receipt arrived as a SEPARATE message 4 seconds before the digest (claim 121, Anthropic
+~$1.4T IPO valuation, confirmed 8:13 CT from Anthropic's updated filing via TechCrunch; sent "live" because
+its saga got a 🚨 at 6:59 CT). Open question for Nicholas: fold live receipts into the digest when the
+digest goes out in the same round. Overnight: claim search ran 10/10 (claim 37 "the woman is a suspected
+Chinese spy" → 🔴 disputed: China called it a smear, AP/PBS say only "alleged"); 30/30 story searches; 2
+alerts today (Anthropic $1.4T IPO 87, Gemini 4 Carbon 70). Step 3 (developing stories) is next.
 
 **Working rules we settled on**
 - Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
