@@ -6,7 +6,7 @@ Read this at the start of every session.
 
 **Where we are:** Stages 1, 2a, 2b, 2c are complete and live (2c finished Nov 9: chat commands, /profile,
 "🎯 How it affects you"). **Stage 3 in progress** (step 1 story corroboration live Nov 9; step 2 claim
-search built Nov 9; see the Stage 3 plan under "Current state").
+search live Nov 9; next: step 3 developing stories; see the Stage 3 plan under "Current state").
 First thing to ask Nicholas: did the first 8am digest (Nov 10) arrive as one message, look right, and
 did any 🎯 note fit him? (This finishes his task #10.) Fix anything wrong before Stage 3.
 
@@ -263,7 +263,7 @@ open claims (more 🧾 receipts) · 3) developing stories: follow a saga, send u
 · 4) 👍/👎 buttons → preference suggestions Nicholas approves (task #12) · 5) `/settings` `/threshold`
 `/alertcap` `/mute` `/unmute`.
 
-**Stage 3, Step 1 — done (code), waiting for restart.** Nicholas chose **Tavily** (task #11 done: free
+**Stage 3, Step 1 — done.** Nicholas chose **Tavily** (task #11 done: free
 plan, no card, key in `.env` as `TAVILY_API_KEY`, verified with a test search). `search.py` (Tavily over
 `requests`, topic=news, 1 credit/search, usage counted from `web_searches`; caps `search.max_per_day` 30 and
 `search.monthly_limit` 950) + `corroborate.py` (picks 🟡/🟠 stories ≥40 importance, ≤36h old, waits 2h so
@@ -287,7 +287,7 @@ the stock drop (background, not the lawsuits). Fix: Haiku first writes the story
 migration 14) and answers `reports_key_fact` per page; code drops any page that says no. Re-tested: #806
 back to 🟡 (correct); #668 ✅ and #681 🟢 still hold. 107 tests. **Live** (restart 22:10 CT, migration 14 applied, clean round). ✅
 
-**Stage 3, Step 2 — done (code), waiting for restart.** Web search for open claims (`claim_search.py`).
+**Stage 3, Step 2 — done.** Web search for open claims (`claim_search.py`).
 Each round up to 2 claims (`search.claims_per_round`), 10/day kept for claims inside the 30/day total
 (`search.claims_per_day`; stories get the other 20). A claim is first searched once its article is ≥12h
 old, then every 3 days; plans not yet due and self-reported performance claims every 14 days. Order: never
@@ -305,7 +305,9 @@ Sonnet said no change; claims were "too new" because their DB rows were made in 
 the article's publish date). Tested on 6 real claims: claim 1 (USDA AI crop tool) 🟡 → 🟢 via DTN; claim 31
 (Anthropic road show) Sonnet: no change ("can begin as early as" isn't the event); Apple/Siri, Meta $60B,
 China 1% chips: only repeats → unchanged (correct). Measured: Haiku $0.0005/claim, Sonnet $0.0049 when
-needed → ~$0.75/month. `python -m signality.claim_search --list` / `--claim N`. 112 tests.
+needed → ~$0.75/month. `python -m signality.claim_search --list` / `--claim N`. 112 tests. **Live** (restart
+22:17 CT, migration 15 applied, clean round; searches paused until midnight because testing used today's
+30). Check tomorrow's log for the first `claim search:` lines.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
