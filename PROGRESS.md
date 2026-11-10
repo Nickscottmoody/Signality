@@ -36,6 +36,29 @@ bottom of "Current state"). First thing to ask Nicholas: did the first 8am diges
 - Sources: **17** (Washington Examiner added for balance); lean from AllSides (checked 2026-11-09).
 - Budget **$10/month**; expected running cost ~$2-3/month (`python -m signality.status`).
 
+**Recovered from the first session (Stages 1-2b), not recorded elsewhere**
+- Preferences: blank line between source links and the note on 🚨 alerts (keep the alert format, he likes
+  it). Few pings: digest at the same time every morning + alerts only when they truly clear the bar.
+  Repo is public on purpose (LinkedIn portfolio): keep README and commits presentable. Credible sources over volume.
+- Rejected, don't re-suggest: adding sources just for credibility (independence > count; let data decide);
+  Washington Times (Examiner only, to limit echo coverage); topic bonus ×1.3 / ×1.15 / +5 / none (×1.1
+  chosen); receipts digest-only or always-live (chose digest + live for alerted sagas); Haiku for claim
+  decisions; a mid-day catch-up digest; yellow Siggy on every 🔔.
+- Promised for later: **source track-record review after a few weeks** (per source: how often first, how
+  often only echoing others, how often its claims hold up → add sources that fill gaps, drop pure echoes;
+  feeds the long-term source-reputation feature).
+- How Nicholas works: decisions that change what he receives (alert counts, thresholds, sources) are
+  offered as choices with a "(Recommended)" pick; technical calls are Claude's. Real measured costs, not
+  guesses. Show only the one command to run now; label on/off commands clearly.
+- Gotchas: git is 2.15 (no `git init -b` etc.); BSD `sed -i ''`; compare dates as Python ISO strings
+  (SQLite `datetime('now')` uses a space, not `T`); re-running live triage on a stored story also runs the
+  same-event merge and overwrites the live row (claims skipped if present); a new migration is applied by
+  whichever process connects first, the old service ignores it; Telegram: user must press Start first,
+  caption limit counts visible UTF-16 text, `link_preview_options`/`reply_markup` are JSON strings in form
+  data, Siggy-above-text needs the public raw GitHub URLs; structured outputs: ids as strings ("Claim 24"),
+  parse digits; schema/system changes invalidate the prompt cache once; local HTML report previews need
+  `python3 -m http.server`; Reuters/AP via Google News are headline-only ("partial").
+
 **Stage 2c — what to build (from CLAUDE.md)**
 - `/profile` onboarding interview in Telegram: ~12 questions, one at a time, tap buttons where possible.
   Topics listed in CLAUDE.md. Save a short profile (<150 words), show it, Nicholas approves/edits before saving.
