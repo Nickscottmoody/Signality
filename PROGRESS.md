@@ -214,7 +214,15 @@ sees it with ✅ Save / ✏️ Change something (types the change, Sonnet rewrit
 saved before Save. Migration 11: `users` (platform + account_id), `user_profiles` (answers, summary,
 next_checkin_at = +90 days), `chat_sessions` (interview progress survives restarts). Config: `profile.max_words`,
 `profile.checkin_days`. Sample run on made-up answers: 92 words, change request handled, $0.0067 for 2 calls.
-"typing…" shown while Siggy works. 76 tests.
+"typing…" shown while Siggy works. 76 tests. **Live** (restart 19:58 CT). ✅ Nicholas did the real interview
+and saved his profile (136 words, 1 Sonnet call; next check-in Feb 7, 2027).
+
+**Stage 2c, Step 3 — done (code), waiting for restart.** `/myprofile` (profile + saved date + next check-in,
+buttons to edit or redo), `/editprofile` (12 answer buttons → that one question again, showing the current
+answer → Sonnet updates the saved profile from the change, keeping earlier hand edits → ✅ Save / ✏️ Change
+something / ↩️ Keep my old profile), `/deleteprofile` (needs a confirming tap; erases profile + answers).
+Check-in: the agent loop sends "🎯 Quick check-in" when `next_checkin_at` passes, only 8am-8pm Central,
+then schedules the next one 90 days out (no nagging if ignored). Dates shown on Nicholas's clock. 81 tests.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

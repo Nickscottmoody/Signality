@@ -145,3 +145,76 @@ def test_tap_reply_marked_replace_edits_the_tapped_message(monkeypatch):
                                 call=lambda method, data: calls.append(method))
     assert calls == ["answerCallbackQuery", "sendChatAction", "editMessageText"]
     assert len(sent) == 1 and "Question 2 of 12" in sent[0].text
+
+
+# --- /myprofile, /editprofile, /deleteprofile, check-in ---------------------------
+
+from datetime import datetime, timezone  # noqa: E402
+
+CHECK_CFG = {**CFG, "digest": {"timezone": "America/Chicago", "send_hour": 8}}
+
+
+def saved_profile(monkeypatch, conn, text="You're a finance student."):
+    fake_ai(monkeypatch, [text])
+    answer_everything(conn)
+    chat.handle_button(conn, CFG, USER, "pf:save")
+
+
+def test_myprofile_shows_the_saved_profile_or_points_to_profile(monkeypatch):
+    conn = memory_db()
+    assert "/profile" in chat.handle(conn, CHECK_CFG, USER, "/myprofile")[0].text
+    saved_profile(monkeypatch, conn)
+    [shown] = chat.handle(conn, CHECK_CFG, USER, "/myprofile")
+    assert "finance student" in shown.text and "next check-in" in shown.text
+    assert ("✏️ Edit an answer", "pf:menu:edit") in [b for row in shown.buttons for b in row]
+
+
+def test_dates_are_shown_on_the_users_clock():
+    assert profile._day("2026-11-10T02:03:57+00:00", CHECK_CFG) == "Nov 9, 2026"   # 8pm Central
+
+
+def test_editing_one_answer_rewrites_and_can_be_kept_or_saved(monkeypatch):
+    conn = memory_db()
+    saved_profile(monkeypatch, conn)
+    [menu] = chat.handle(conn, CFG, USER, "/editprofile")
+    assert len([b for row in menu.buttons for b in row]) == 12
+    [question] = chat.handle_button(conn, CFG, USER, "pf:edit:location")
+    assert "Editing one answer" in question.text and "Now: Dallas, TX" in question.text
+    prompts = fake_ai(monkeypatch, ["You're a finance student in Austin."])
+    [review] = chat.handle(conn, CFG, USER, "Austin, TX")
+    assert "Austin" in review.text and "Current profile:\nYou're a finance student." in prompts[0]
+    assert ("↩️ Keep my old profile", "pf:keep") in [b for row in review.buttons for b in row]
+    chat.handle_button(conn, CFG, USER, "pf:keep")
+    assert profile.get(conn, USER)["summary"] == "You're a finance student."   # kept the old one
+    chat.handle_button(conn, CFG, USER, "pf:edit:location")
+    chat.handle(conn, CFG, USER, "Austin, TX")
+    chat.handle_button(conn, CFG, USER, "pf:save")
+    row = profile.get(conn, USER)
+    assert "Austin" in row["summary"] and '"location": "Austin, TX"' in row["answers"]
+
+
+def test_delete_needs_a_confirming_tap(monkeypatch):
+    conn = memory_db()
+    saved_profile(monkeypatch, conn)
+    [ask] = chat.handle(conn, CFG, USER, "/deleteprofile")
+    assert "permanently" in ask.text and profile.get(conn, USER) is not None
+    assert "Kept" in chat.handle_button(conn, CFG, USER, "pf:delete:no")[0].text
+    assert profile.get(conn, USER) is not None
+    assert "Erased" in chat.handle_button(conn, CFG, USER, "pf:delete:yes")[0].text
+    assert profile.get(conn, USER) is None
+    assert "no profile" in chat.handle(conn, CFG, USER, "/deleteprofile")[0].text
+
+
+def test_checkin_is_sent_when_due_in_the_daytime_then_rescheduled(monkeypatch):
+    conn = memory_db()
+    saved_profile(monkeypatch, conn)
+    soon = datetime(2026, 11, 10, 18, tzinfo=timezone.utc)        # noon Central, not due yet
+    assert profile.due_checkins(conn, CHECK_CFG, now=soon) == []
+    later_day = datetime(2027, 3, 1, 18, tzinfo=timezone.utc)     # noon Central, due
+    later_night = datetime(2027, 3, 1, 8, tzinfo=timezone.utc)    # 2am Central: wait for daytime
+    assert profile.due_checkins(conn, CHECK_CFG, now=later_night) == []
+    [(user_id, user_key, reply)] = profile.due_checkins(conn, CHECK_CFG, now=later_day)
+    assert user_key == USER and "about 3 months" in reply.text and "finance student" in reply.text
+    profile.checked_in(conn, CHECK_CFG, user_id, now=later_day)
+    assert profile.due_checkins(conn, CHECK_CFG, now=later_day) == []
+    assert "Great" in chat.handle_button(conn, CFG, USER, "pf:checkin:ok")[0].text

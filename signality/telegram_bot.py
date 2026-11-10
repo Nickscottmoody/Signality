@@ -41,6 +41,14 @@ def send_reply(reply, chat_id, cfg):
     return telegram.send_message(body, chat_id, image_url=image_url, buttons=reply.buttons)
 
 
+def send_to_user(user_key, reply, cfg):
+    """Start a message to a user (not a reply), e.g. the profile check-in."""
+    platform, account_id = user_key.split(":", 1)
+    if platform != "telegram":
+        raise ValueError(f"not a Telegram user: {user_key}")
+    return send_reply(reply, account_id, cfg)
+
+
 def is_owner(sender_id, chat_type):
     owner = secret("TELEGRAM_USER_ID")
     return bool(owner) and str(sender_id) == owner and chat_type == "private"

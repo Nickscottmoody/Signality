@@ -14,15 +14,20 @@ def memory_db():
     return conn
 
 
-def test_help_lists_working_and_coming_commands():
+def test_help_lists_working_and_coming_commands(monkeypatch):
+    monkeypatch.setitem(chat.COMMANDS, "later", ("Something not built yet", None, True))
     [reply] = chat.handle(None, CFG, "telegram:1", "/help")
-    assert "/start" in reply.text and "/help" in reply.text
-    assert "Coming soon:" in reply.text and "/myprofile" in reply.text.split("Coming soon:")[1]
+    ready, soon = reply.text.split("Coming soon:")
+    for name in ("start", "help", "profile", "myprofile", "editprofile", "deleteprofile", "cancel"):
+        assert f"/{name} " in ready
+    assert "/later" in soon
+    assert "coming soon" in chat.handle(None, CFG, "telegram:1", "/later")[0].text
 
 
-def test_command_menu_shows_only_working_commands():
+def test_command_menu_shows_only_working_commands(monkeypatch):
+    monkeypatch.setitem(chat.COMMANDS, "later", ("Something not built yet", None, True))
     names = [name for name, _ in chat.menu()]
-    assert "help" in names and "profile" in names and "myprofile" not in names
+    assert "help" in names and "myprofile" in names and "later" not in names
 
 
 def test_commands_ignore_case_bot_name_and_extra_words():
@@ -33,7 +38,6 @@ def test_commands_ignore_case_bot_name_and_extra_words():
 def test_unknown_commands_and_plain_text_get_a_friendly_pointer_to_help():
     assert "/help" in chat.handle(None, CFG, "telegram:1", "/nope")[0].text
     assert "/help" in chat.handle(memory_db(), CFG, "telegram:1", "hello?")[0].text
-    assert "coming soon" in chat.handle(None, CFG, "telegram:1", "/myprofile")[0].text
 
 
 def test_button_codes_must_fit_telegram_limit():

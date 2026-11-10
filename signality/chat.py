@@ -80,7 +80,16 @@ def _cancel(conn, cfg, user, args):
     return profile.cancel(conn, user)
 
 
-# Stage 2c: listed now so /help shows what's on the way; each one is switched on as it's built.
-command("myprofile", "See the profile I saved about you", coming=True)(None)
-command("editprofile", "Change one answer in your profile", coming=True)(None)
-command("deleteprofile", "Erase your profile", coming=True)(None)
+@command("myprofile", "See the profile I saved about you")
+def _myprofile(conn, cfg, user, args):
+    return profile.show(conn, cfg, user)
+
+
+@command("editprofile", "Change one answer in your profile")
+def _editprofile(conn, cfg, user, args):
+    return profile.edit_menu(conn, user)
+
+
+@command("deleteprofile", "Erase your profile")
+def _deleteprofile(conn, cfg, user, args):
+    return profile.confirm_delete(conn, user)

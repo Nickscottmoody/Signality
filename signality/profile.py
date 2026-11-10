@@ -10,6 +10,7 @@ Private: stored only in the local database (data/ is gitignored), per user.
 """
 import json
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from . import ai, db, users
 from .messages import Reply
@@ -48,6 +49,14 @@ QUESTIONS = [
      "hint": "Type it, or tap Nothing.", "skip": "Nothing"},
 ]
 BY_KEY = {q["key"]: q for q in QUESTIONS}
+SHORT = {"status": "What you do", "field": "Field of study", "job": "Job and role", "goals": "Career goals",
+         "industries": "Industries", "skills": "Tools and skills", "ai_use": "How you use AI",
+         "excites": "AI excites you", "worries": "AI worries you", "location": "Location",
+         "areas": "Impact areas", "off_limits": "Off-limits"}
+
+
+def _shown(answer):
+    return answer if isinstance(answer, str) else ", ".join(answer) if answer else "(skipped)"
 
 
 # --- Saved interview progress (chat_sessions) ---------------------------------
@@ -79,6 +88,9 @@ def in_progress(conn, user_key):
 
 def _question_text(state):
     q = QUESTIONS[state["step"]]
+    if state.get("mode") == "edit":
+        current = _shown(state["answers"].get(q["key"]))
+        return f"Editing one answer\n{q['text']}\n\nNow: {current}\n\n{q.get('hint', '')}".strip()
     return f"Question {state['step'] + 1} of {len(QUESTIONS)}\n{q['text']}\n\n{q.get('hint', '')}".strip()
 
 
@@ -126,11 +138,13 @@ def cancel(conn, user_key):
 def _record(conn, cfg, user_id, state, answer, tapped_label=None):
     """Store one answer and move on: the next question, or the profile review."""
     q = QUESTIONS[state["step"]]
-    state["answers"][q["key"]] = answer
-    shown = answer if isinstance(answer, str) else ", ".join(answer) if answer else "(skipped)"
     replies = []
     if tapped_label is not None:  # show the answer on the question that was tapped
-        replies.append(Reply(f"{_question_text(state)}\n\n→ {shown}", replace=True))
+        replies.append(Reply(f"{_question_text(state)}\n\n→ {_shown(answer)}", replace=True))
+    state["answers"][q["key"]] = answer
+    if state.get("mode") == "edit":  # one answer changed: rewrite the saved profile to match
+        change = f'Update the profile for this new answer to "{q["text"]}": {_shown(answer)}'
+        return replies + _review(conn, cfg, user_id, state, change=change)
     state["step"] += 1
     state["picked"] = []
     if state["step"] < len(QUESTIONS):
@@ -152,24 +166,38 @@ def on_text(conn, cfg, user_key, text):
         return _record(conn, cfg, user_id, state, answer)
     if state["phase"] == "revising":
         return _review(conn, cfg, user_id, state, change=text)
-    return [Reply("Tap ✅ Save, ✏️ Change something, or 🔁 Start over under your profile above.")]
+    return [Reply("Tap one of the buttons under your profile above.")]
 
 
 def on_button(conn, cfg, user_key, data):
     """A tapped button whose code starts with 'pf:'."""
     user_id = users.get_or_create(conn, user_key)
-    state = _load(conn, user_id)
     parts = data.split(":")
+    # Buttons that work any time (from /myprofile, /editprofile, /deleteprofile, the check-in)
+    if parts[1] == "menu":
+        return edit_menu(conn, user_key) if parts[2] == "edit" else start(conn, cfg, user_key)
+    if parts[1] == "edit":
+        return begin_edit(conn, user_key, parts[2])
+    if parts[1] == "delete":
+        return delete(conn, user_key) if parts[2] == "yes" else [Reply("Kept. Nothing was erased.")]
+    if parts[1] == "checkin":
+        return [Reply("Great, I'll keep using it. I'll check in again in a few months. "
+                      "Type /editprofile any time something changes.")]
+
+    state = _load(conn, user_id)
     if state is None:
         return [Reply("That interview is closed. Type /profile to start a new one.")]
 
-    if parts[1] in ("save", "change", "restart"):
+    if parts[1] in ("save", "change", "restart", "keep"):
         if state["phase"] not in ("review", "revising"):
             return [Reply("That button is from an older profile. Keep going with the questions above.")]
         if parts[1] == "save":
             return _store(conn, cfg, user_id, state)
         if parts[1] == "restart":
             return start(conn, cfg, user_key)
+        if parts[1] == "keep":
+            _clear(conn, user_id)
+            return [Reply("No change. Your saved profile stays as it was.")]
         state["phase"] = "revising"
         _save(conn, user_id, state)
         return [Reply("Type what to change, in your own words.\n\n"
@@ -258,11 +286,13 @@ def _review(conn, cfg, user_id, state, change=None):
     state["phase"] = "review"
     _save(conn, user_id, state)
     words = len(state["summary"].split())
+    last = (("↩️ Keep my old profile", f"{PREFIX}:keep") if state.get("mode") == "edit"
+            else ("🔁 Start over", f"{PREFIX}:restart"))
     return [Reply(f"{state['summary']}\n\n({words} words. Only you can see this.)",
                   title="📋 Here's your profile. Look right?",
                   buttons=[[("✅ Save", f"{PREFIX}:save")],
                            [("✏️ Change something", f"{PREFIX}:change")],
-                           [("🔁 Start over", f"{PREFIX}:restart")]])]
+                           [last]])]
 
 
 def _store(conn, cfg, user_id, state):
@@ -287,3 +317,97 @@ def get(conn, user_key):
     """The saved profile row for a user, or None."""
     user_id = users.get_or_create(conn, user_key)
     return conn.execute("SELECT * FROM user_profiles WHERE user_id = ?", (user_id,)).fetchone()
+
+
+# --- /myprofile, /editprofile, /deleteprofile -------------------------------------
+
+def _day(iso, cfg):
+    """A saved UTC time as the user's calendar day, e.g. 'Nov 9, 2026'."""
+    d = datetime.fromisoformat(iso).astimezone(ZoneInfo(cfg["digest"]["timezone"]))
+    return f"{d:%b} {d.day}, {d.year}"
+
+
+NO_PROFILE = Reply("You don't have a profile yet. Type /profile to answer 12 quick questions.")
+
+
+def show(conn, cfg, user_key):
+    row = get(conn, user_key)
+    if row is None:
+        return [NO_PROFILE]
+    return [Reply(f"{row['summary']}\n\nSaved {_day(row['updated_at'], cfg)} · next check-in {_day(row['next_checkin_at'], cfg)}"
+                  "\nStored only on this computer.",
+                  title="📋 Your profile",
+                  buttons=[[("✏️ Edit an answer", f"{PREFIX}:menu:edit")],
+                           [("🔁 Redo the interview", f"{PREFIX}:menu:redo")]])]
+
+
+def edit_menu(conn, user_key):
+    if get(conn, user_key) is None:
+        return [NO_PROFILE]
+    pairs = [(SHORT[q["key"]], f"{PREFIX}:edit:{q['key']}") for q in QUESTIONS]
+    return [Reply("Which answer do you want to change?", title="✏️ Edit your profile",
+                  buttons=[pairs[i:i + 2] for i in range(0, len(pairs), 2)])]
+
+
+def begin_edit(conn, user_key, key):
+    row = get(conn, user_key)
+    if row is None:
+        return [NO_PROFILE]
+    if key not in BY_KEY:
+        return [Reply("That button has expired. Type /editprofile to try again.")]
+    state = {"step": next(i for i, q in enumerate(QUESTIONS) if q["key"] == key), "mode": "edit",
+             "answers": json.loads(row["answers"]), "summary": row["summary"], "picked": [], "phase": "asking"}
+    _save(conn, users.get_or_create(conn, user_key), state)
+    return [_ask(state)]
+
+
+def confirm_delete(conn, user_key):
+    if get(conn, user_key) is None:
+        return [Reply("There's no profile to erase.")]
+    return [Reply("This permanently erases your profile and interview answers from this computer. "
+                  "\"🎯 How it affects you\" notes stop until you do /profile again.",
+                  title="🗑️ Erase your profile?",
+                  buttons=[[("🗑️ Yes, erase it", f"{PREFIX}:delete:yes"), ("Keep it", f"{PREFIX}:delete:no")]])]
+
+
+def delete(conn, user_key):
+    user_id = users.get_or_create(conn, user_key)
+    gone = conn.execute("DELETE FROM user_profiles WHERE user_id = ?", (user_id,)).rowcount
+    _clear(conn, user_id)
+    conn.commit()
+    return [Reply("Erased. Your profile and answers are gone. Type /profile any time to make a new one."
+                  if gone else "There's no profile to erase.")]
+
+
+# --- The check-in every few months -------------------------------------------------
+
+def due_checkins(conn, cfg, now=None):
+    """Profiles due for a "has anything changed?" message: [(user_id, user_key, Reply)].
+
+    Only sent during the day (from the digest hour until 8pm, the user's clock).
+    """
+    now = now or datetime.now(timezone.utc)
+    local_hour = now.astimezone(ZoneInfo(cfg["digest"]["timezone"])).hour
+    if not cfg["digest"]["send_hour"] <= local_hour < 20:
+        return []
+    rows = conn.execute(
+        "SELECT p.user_id, p.summary, u.platform, u.account_id FROM user_profiles p "
+        "JOIN users u ON u.id = p.user_id WHERE p.next_checkin_at <= ?",
+        (now.isoformat(timespec="seconds"),)).fetchall()
+    months = round(cfg["profile"]["checkin_days"] / 30)
+    return [(r["user_id"], f"{r['platform']}:{r['account_id']}",
+             Reply(f"It's been about {months} months since your profile was saved. Is it still right?\n\n"
+                   f"{r['summary']}",
+                   title="🎯 Quick check-in", image="normal",
+                   buttons=[[("👍 Still accurate", f"{PREFIX}:checkin:ok")],
+                            [("✏️ Edit an answer", f"{PREFIX}:menu:edit")],
+                            [("🔁 Redo the interview", f"{PREFIX}:menu:redo")]]))
+            for r in rows]
+
+
+def checked_in(conn, cfg, user_id, now=None):
+    """The check-in was sent: schedule the next one (no nagging if it goes unanswered)."""
+    now = now or datetime.now(timezone.utc)
+    nxt = (now + timedelta(days=cfg["profile"]["checkin_days"])).isoformat(timespec="seconds")
+    conn.execute("UPDATE user_profiles SET next_checkin_at = ? WHERE user_id = ?", (nxt, user_id))
+    conn.commit()

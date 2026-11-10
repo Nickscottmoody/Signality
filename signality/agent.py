@@ -13,7 +13,7 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-from . import ai, db, delivery, fetcher, resolution, telegram_bot, triage, validity
+from . import ai, db, delivery, fetcher, profile, resolution, telegram_bot, triage, validity
 from .settings import ROOT, load_config
 
 log = logging.getLogger("signality")
@@ -95,6 +95,16 @@ def one_round():
                      f", budget notice: {d['budget_notice']}" if d["budget_notice"] else "")
     except Exception:
         log.exception("delivery round crashed; will try again next round")
+
+    try:  # every few months: "is your profile still right?"
+        conn = db.connect(cfg["storage"]["db_path"])
+        for user_id, user_key, reply in profile.due_checkins(conn, cfg):
+            telegram_bot.send_to_user(user_key, reply, cfg)
+            profile.checked_in(conn, cfg, user_id)
+            log.info("profile: sent the %d-day check-in", cfg["profile"]["checkin_days"])
+        conn.close()
+    except Exception:
+        log.exception("profile check-in crashed; will try again next round")
 
 
 def main():
