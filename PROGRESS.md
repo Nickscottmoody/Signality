@@ -332,7 +332,7 @@ messages (Nov 11 00:23 CT ×2, Nov 12 08:58 and 20:01, Nov 13 00:16/00:47/01:17 
 After restart: migration 16 in place, clean round at 01:23 CT. ✅ Nicholas confirmed (Nov 13, screenshot)
 the 🧾 line shows under the 6:59am Nov 10 Anthropic alert. Next: Stage 3 step 3 (developing stories).
 
-**Stage 3, Step 3 (developing stories) — done (code), waiting for restart.** Nicholas picked **A** (Nov 13): at most **1 update alert per saga per day**, after its first 🚨. Measured Nov 12: 77 Nvidia/
+**Stage 3, Step 3 (developing stories) — LIVE (restart 14:06 CT, Nov 13; clean round; gap backfilled: 60 stories, $0.007).** Nicholas picked **A** (Nov 13): at most **1 update alert per saga per day**, after its first 🚨. Measured Nov 12: 77 Nvidia/
 Huang stories, 16 scored 65+ (novelty mostly 3 = "new development in an ongoing story", even for analysis
 and memos); under the old 24h-per-saga rule he got 1 Nvidia 🚨 that day. Plan: a `threads` table (shared
 news data) + `stories.thread_id`; triage (same Haiku call, no extra call) is shown up to 3 active threads
@@ -349,7 +349,7 @@ saga"): 477 stories, 190 joined, $0.044. Live check of the new triage prompt on 
 novelty for rehash/reaction fell (4→2, 3→2, 2→1); the genuinely new "third affair" kept 3. $0.004.
 Watch: Haiku still makes some loose threads (e.g. two unrelated law-firm AI stories) → digest folds them.
 Huang saga also split into side threads (market reaction, succession, export controls). 123 tests.
-Next: Nicholas restarts, then watch the first update alert / digest "🔄 Update" lines.
+Next: check the Nov 14 8am digest's "🔄 Update" lines and the first update alert with Nicholas, then step 4 (👍/👎, task #12).
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
