@@ -329,8 +329,16 @@ calls the AI). Tested for real: claim 121's receipt added to the 6:59 CT Anthrop
 text message, edited OK, no ping). 116 tests.
 Open issue: the restart came ~2.5 days after the commit, so the OLD code sent 7 receipts as separate
 messages (Nov 11 00:23 CT ×2, Nov 12 08:58 and 20:01, Nov 13 00:16/00:47/01:17 CT, mostly the Jensen Huang saga).
-After restart: migration 16 in place, clean round at 01:23 CT. Still to confirm with Nicholas: the 🧾 line
-shows under the 6:59am Nov 10 Anthropic alert. Next: Stage 3 step 3 (developing stories).
+After restart: migration 16 in place, clean round at 01:23 CT. ✅ Nicholas confirmed (Nov 13, screenshot)
+the 🧾 line shows under the 6:59am Nov 10 Anthropic alert. Next: Stage 3 step 3 (developing stories).
+
+**Stage 3, Step 3 (developing stories) — design, waiting for Nicholas's pick.** Measured Nov 12: 77 Nvidia/
+Huang stories, 16 scored 65+ (novelty mostly 3 = "new development in an ongoing story", even for analysis
+and memos); under the old 24h-per-saga rule he got 1 Nvidia 🚨 that day. Plan: a `threads` table (shared
+news data) + `stories.thread_id`; triage (same Haiku call, no extra call) is shown up to 3 active threads
+that share words with the story, picks the one it continues or "none", writes one "what's new" line, and
+rates novelty against what the thread already said. Update alerts reply to the original 🚨 in Telegram;
+the digest shows "🔄 Update" with the what's-new line instead of "➕ N related"; receipts attach by thread.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
