@@ -318,7 +318,7 @@ needed → ~$0.75/month. `python -m signality.claim_search --list` / `--claim N`
 22:17 CT, migration 15 applied, clean round; searches paused until midnight because testing used today's
 30). Check tomorrow's log for the first `claim search:` lines.
 
-**Receipts folded into alerts — done (code), waiting for restart.** Nicholas's choice A (Nov 10): no
+**Receipts folded into alerts — LIVE (restart 01:23 CT, Nov 13).** Nicholas's choice A (Nov 10): no
 receipt is ever its own message. `delivery.attach_receipts_to_alerts` (replaces `send_live_receipts`) adds
 a receipt for an alerted saga to the newest matching 🚨 by editing it (`telegram.update_delivered`:
 `editMessageCaption` for photo alerts, `editMessageText` with Siggy above for text alerts; "not modified"
@@ -327,6 +327,10 @@ records each attachment (edited 0/1); attaching does NOT count as delivery, so `
 digest still list every receipt. Re-rendering uses the stored impact note only (`impact.stored_note`, never
 calls the AI). Tested for real: claim 121's receipt added to the 6:59 CT Anthropic $1.4T alert (story 854,
 text message, edited OK, no ping). 116 tests.
+Open issue: the restart came ~2.5 days after the commit, so the OLD code sent 7 receipts as separate
+messages (Nov 11 00:23 CT ×2, Nov 12 08:58 and 20:01, Nov 13 00:16/00:47/01:17 CT, mostly the Jensen Huang saga).
+After restart: migration 16 in place, clean round at 01:23 CT. Still to confirm with Nicholas: the 🧾 line
+shows under the 6:59am Nov 10 Anthropic alert. Next: Stage 3 step 3 (developing stories).
 
 ## How to run / operate
 | Do this | Command (from the project folder) |
