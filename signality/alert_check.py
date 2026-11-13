@@ -44,9 +44,18 @@ SCHEMA = {
 }
 
 
-def build_prompt(t, label, article, text, text_source):
+def build_prompt(t, label, article, text, text_source, update=None):
     factors = "\n".join(f"  {f}: {t[f]}/5 - {t[f + '_reason']}" for f in ("impact", "breadth", "urgency", "novelty"))
+    follow_up = [] if not update else [
+        f"UPDATE TO A DEVELOPING STORY: the reader already got an alert on {update['date']} about: "
+        f"\"{update['headline']}\".",
+        f"What this story adds, per triage: {t['whats_new'] or '(not stated)'}",
+        "Send this as an alert only if it is a significant NEW development in that story (a new decision, "
+        "action, or confirmed fact), not reaction, analysis, or a recap of what the reader already knows.",
+        "",
+    ]
     return "\n".join([
+        *follow_up,
         f"Headline: {t['headline']}",
         f"Summary: {t['summary']}",
         f"Why it matters: {t['why_it_matters']}",
@@ -61,8 +70,11 @@ def build_prompt(t, label, article, text, text_source):
     ])
 
 
-def check(conn, cfg, story_id):
-    """Ask Sonnet whether this story deserves a loud alert. Saves and returns the verdict."""
+def check(conn, cfg, story_id, update=None):
+    """Ask Sonnet whether this story deserves a loud alert. Saves and returns the verdict.
+
+    update: for a story in a saga the reader already got a 🚨 about, {"headline", "date"} of that alert.
+    """
     t = conn.execute("SELECT * FROM story_triage WHERE story_id = ? AND purpose = 'live'", (story_id,)).fetchone()
     label = validity.update(conn, story_id)
     article = conn.execute(
@@ -77,7 +89,7 @@ def check(conn, cfg, story_id):
 
     data, cost = ai.ask_json(
         conn, cfg, task="alert_check", role="high_stakes", story_id=story_id,
-        system=SYSTEM, prompt=build_prompt(t, label, article, text, text_source), schema=SCHEMA,
+        system=SYSTEM, prompt=build_prompt(t, label, article, text, text_source, update), schema=SCHEMA,
     )
     model = cfg["models"]["high_stakes"]
     conn.execute(

@@ -67,7 +67,7 @@ def test_related_headlines_are_grouped_but_different_stories_are_not():
 def test_digest_item_shows_related_count():
     c = card()
     c.related_ids = [5, 6, 7]
-    assert "➕ 3 related stories on this" in telegram.render_digest_item(1, c)
+    assert "➕ 3 more articles on this story" in telegram.render_digest_item(1, c)
 
 
 def test_alert_note_is_separated_from_links_by_a_blank_line():

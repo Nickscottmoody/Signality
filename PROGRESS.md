@@ -332,13 +332,24 @@ messages (Nov 11 00:23 CT ×2, Nov 12 08:58 and 20:01, Nov 13 00:16/00:47/01:17 
 After restart: migration 16 in place, clean round at 01:23 CT. ✅ Nicholas confirmed (Nov 13, screenshot)
 the 🧾 line shows under the 6:59am Nov 10 Anthropic alert. Next: Stage 3 step 3 (developing stories).
 
-**Stage 3, Step 3 (developing stories) — design, waiting for Nicholas's pick.** Measured Nov 12: 77 Nvidia/
+**Stage 3, Step 3 (developing stories) — done (code), waiting for restart.** Nicholas picked **A** (Nov 13): at most **1 update alert per saga per day**, after its first 🚨. Measured Nov 12: 77 Nvidia/
 Huang stories, 16 scored 65+ (novelty mostly 3 = "new development in an ongoing story", even for analysis
 and memos); under the old 24h-per-saga rule he got 1 Nvidia 🚨 that day. Plan: a `threads` table (shared
 news data) + `stories.thread_id`; triage (same Haiku call, no extra call) is shown up to 3 active threads
 that share words with the story, picks the one it continues or "none", writes one "what's new" line, and
 rates novelty against what the thread already said. Update alerts reply to the original 🚨 in Telegram;
 the digest shows "🔄 Update" with the what's-new line instead of "➕ N related"; receipts attach by thread.
+Built: `threads.py`, migration 17 (`threads`, `stories.thread_id`, `story_triage.whats_new`,
+`deliveries.update_of`), config `threads:`. Update = a saga this reader was already sent (per user, from
+deliveries). Update alerts: reply to the first 🚨 (`reply_parameters`), Sonnet told it's an update and must
+be a significant NEW development, capped per original alert per day; a side thread of a big saga (headline
+shares ≥2 words with an alert in the last 24h) also counts as an update. Old 24h-per-saga rule removed.
+Backfill (`python -m signality.threads --backfill 4`, run twice after tightening "a broad trend is not a
+saga"): 477 stories, 190 joined, $0.044. Live check of the new triage prompt on 6 real Huang stories:
+novelty for rehash/reaction fell (4→2, 3→2, 2→1); the genuinely new "third affair" kept 3. $0.004.
+Watch: Haiku still makes some loose threads (e.g. two unrelated law-firm AI stories) → digest folds them.
+Huang saga also split into side threads (market reaction, succession, export controls). 123 tests.
+Next: Nicholas restarts, then watch the first update alert / digest "🔄 Update" lines.
 
 ## How to run / operate
 | Do this | Command (from the project folder) |

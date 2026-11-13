@@ -26,6 +26,7 @@ class StoryCard:
     topics: list
     sources: list           # [(outlet name, url), ...]
     related_ids: list = field(default_factory=list)  # digest: other stories on the same saga, folded in
+    update_line: str = ""   # "🔄 Update": what's new, for a saga this reader already heard about (personal)
     impact_note: str = ""   # "🎯 How it affects you" (personal: never show in a public channel)
 
     @property
@@ -61,6 +62,7 @@ class Message:
     receipts: list = field(default_factory=list)     # 🧾 ReceiptCards
     text: str = ""                  # body for notices
     note: str = ""                  # small extra line, e.g. why an alert was sent quietly
+    reply_to: str | None = None     # an update: the platform's id of the earlier message it follows up
 
 
 @dataclass

@@ -83,6 +83,8 @@ def report(conn, cfg):
     lines.append(f"  claims              {one('SELECT COUNT(*) FROM claims WHERE status != ?', 'duplicate')} unique, {open_claims} open,"
                  f" {one('SELECT COUNT(*) FROM claim_events WHERE event = ?', 'resolved')} resolved by evidence,"
                  f" {one('SELECT COUNT(*) FROM claim_receipts')} receipts sent")
+    lines.append(f"  developing stories  {one('SELECT COUNT(*) FROM threads WHERE story_count > 1')} with 2+ stories,"
+                 f" {one('SELECT COUNT(*) FROM deliveries WHERE update_of IS NOT NULL')} update alerts sent")
     audit = bias.summarize(bias.rows(conn))["leans"]
     if audit:
         lines += ["", "Bias audit (share of ✅/🟢 labels by source lean; details: python -m signality.bias)"]

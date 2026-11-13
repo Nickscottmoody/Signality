@@ -356,6 +356,22 @@ MIGRATIONS = [
         UNIQUE (claim_event_id, recipient)
     );
     """,
+    # 17 - Stage 3: developing stories (threads). One saga (e.g. the Nvidia CEO affair) produces many
+    #      different stories; a thread links them so Siggy can say what's NEW. Threads are shared news
+    #      data; whether a story is an "update" for someone is worked out from their own deliveries.
+    """
+    CREATE TABLE threads (
+        id              INTEGER PRIMARY KEY,
+        title           TEXT NOT NULL,      -- headline of the story that started it
+        started_at      TEXT NOT NULL,
+        last_story_at   TEXT NOT NULL,      -- a thread is "active" while this is recent
+        story_count     INTEGER NOT NULL DEFAULT 1
+    );
+    ALTER TABLE stories ADD COLUMN thread_id INTEGER REFERENCES threads(id);
+    CREATE INDEX idx_stories_thread ON stories(thread_id);
+    ALTER TABLE story_triage ADD COLUMN whats_new TEXT;      -- one line: what this story adds to its thread
+    ALTER TABLE deliveries ADD COLUMN update_of INTEGER REFERENCES deliveries(id);  -- an update alert: the original 🚨
+    """,
 ]
 
 

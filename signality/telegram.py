@@ -53,7 +53,13 @@ def keyboard(buttons):
                                            for row in buttons]})
 
 
-def send_message(text, chat_id=None, silent=False, image_url=None, buttons=None):
+def _reply(data, reply_to):
+    """Show the message as a reply to an earlier one (sent anyway if that one was deleted)."""
+    if reply_to:
+        data["reply_parameters"] = json.dumps({"message_id": int(reply_to), "allow_sending_without_reply": True})
+
+
+def send_message(text, chat_id=None, silent=False, image_url=None, buttons=None, reply_to=None):
     """Send a text message. Text may use simple HTML: <b>, <i>, <a href>.
 
     With image_url, Telegram shows that picture above the text, all in ONE message.
@@ -70,6 +76,7 @@ def send_message(text, chat_id=None, silent=False, image_url=None, buttons=None)
     }
     if buttons:
         data["reply_markup"] = keyboard(buttons)
+    _reply(data, reply_to)
     return _call("sendMessage", data)
 
 
@@ -87,7 +94,7 @@ def edit_caption(message_id, caption, chat_id=None):
                                         "caption": caption, "parse_mode": "HTML"})
 
 
-def send_photo(image, caption, chat_id=None, silent=False, buttons=None):
+def send_photo(image, caption, chat_id=None, silent=False, buttons=None, reply_to=None):
     """Send one of Siggy's pictures with a caption (max 1024 characters)."""
     data = {
         "chat_id": _chat_id(chat_id),
@@ -97,6 +104,7 @@ def send_photo(image, caption, chat_id=None, silent=False, buttons=None):
     }
     if buttons:
         data["reply_markup"] = keyboard(buttons)
+    _reply(data, reply_to)
     with open(ROOT / image, "rb") as f:
         return _call("sendPhoto", data, files={"photo": f})
 
@@ -127,6 +135,7 @@ def render_card(card, kind, note=""):
     f = card.factors
     lines = [
         f"{TIER_ICON.get(kind, '')} <b>{_e(card.headline)}</b>".strip(),
+        *([f"🔄 <b>Update:</b> {_e(card.update_line)}"] if card.update_line else []),
         _e(card.summary),
         "",
         f"<b>Why it matters:</b> {_e(card.why_it_matters)}",
@@ -153,9 +162,10 @@ def render_digest_item(n, card):
     extras = " · 📄 partial" if card.partial else ""
     extras += " · 🏷️ self-reported" if card.self_reported else ""
     more = len(card.related_ids)
-    related = f"\n➕ {more} related {'story' if more == 1 else 'stories'} on this" if more else ""
+    related = f"\n➕ {more} more {'article' if more == 1 else 'articles'} on this story" if more else ""
     note = f"🎯 {_e(card.impact_note)}\n" if card.impact_note else ""
-    return (f"<b>{n}. {_e(card.headline)}</b>\n{_e(card.why_it_matters)}\n{note}"
+    update = f"🔄 <b>Update:</b> {_e(card.update_line)}\n" if card.update_line else ""
+    return (f"<b>{n}. {_e(card.headline)}</b>\n{update}{_e(card.why_it_matters)}\n{note}"
             f"{card.label_text} · 📊 {card.importance}{extras} · {_links(card.sources, 2)}{related}")
 
 
@@ -245,8 +255,9 @@ def deliver(message, cfg, chat_id=None):
     def with_image(body, key, silent):
         """Photo with caption if it fits; otherwise the picture shown above a text message."""
         if key and visible_length(body) <= CAPTION_LIMIT:
-            return send_photo(images[key], body, chat_id, silent=silent)
-        return send_message(body, chat_id, silent=silent, image_url=image_urls.get(key) if key else None)
+            return send_photo(images[key], body, chat_id, silent=silent, reply_to=message.reply_to)
+        return send_message(body, chat_id, silent=silent, image_url=image_urls.get(key) if key else None,
+                            reply_to=message.reply_to)
 
     if message.kind in ("alert", "silent"):
         key = "alert" if message.kind == "alert" else ("normal" if cfg["delivery"]["image_on_silent"] else None)

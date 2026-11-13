@@ -15,7 +15,7 @@ Safety rules from the brief:
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import ai, alert_check, db, impact, messages, receipts, scoring, telegram, validity
+from . import ai, alert_check, db, impact, messages, receipts, scoring, telegram, threads, validity
 from .dedup import key_words, related
 from .settings import secret
 
@@ -45,14 +45,14 @@ def route(importance, label, cfg):
     return tier
 
 
-def _send(conn, cfg, message, story_id=None, note=None):
+def _send(conn, cfg, message, story_id=None, note=None, update_of=None):
     """Deliver one message and record it. Returns True if sent."""
     message_id = telegram.deliver(message, cfg)["message_id"]
     conn.execute(
-        "INSERT INTO deliveries (story_id, recipient, kind, sent_at, local_date, channel_message_id, note)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO deliveries (story_id, recipient, kind, sent_at, local_date, channel_message_id, note, update_of)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (story_id, recipient(), message.kind, db.utcnow(), local_now(cfg).date().isoformat(),
-         str(message_id), note),
+         str(message_id), note, update_of),
     )
     conn.commit()
     return True
@@ -65,20 +65,14 @@ def alerts_sent_today(conn, cfg):
     ).fetchone()[0]
 
 
-def recently_alerted_on_same_saga(conn, headline, hours=24):
-    """True if a 🚨 about a related story (same saga) went out in the last `hours`."""
-    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat(timespec="seconds")
-    words = key_words(headline)
-    for (other,) in conn.execute(
-        "SELECT t.headline FROM deliveries d JOIN story_triage t ON t.story_id = d.story_id AND t.purpose = 'live'"
-        " WHERE d.kind = 'alert' AND d.recipient = ? AND d.sent_at >= ?", (recipient(), since),
-    ):
-        if related(words, key_words(other)):
-            return True
-    return False
+def personal_card(conn, story_id, before=None):
+    """A story card with this reader's "🔄 Update" line when they already heard about its saga."""
+    card = messages.story_card(conn, story_id)
+    card.update_line = threads.update_line(conn, recipient(), story_id, before)
+    return card
 
 
-def _alert_verdict(conn, cfg, story_id):
+def _alert_verdict(conn, cfg, story_id, update=None):
     """Sonnet's verdict (reusing an earlier one so we never pay twice). None if it couldn't run."""
     row = conn.execute(
         "SELECT send_as_alert, reason FROM alert_checks WHERE story_id = ? ORDER BY id DESC LIMIT 1", (story_id,)
@@ -86,7 +80,7 @@ def _alert_verdict(conn, cfg, story_id):
     if row:
         return {"send_as_alert": bool(row[0]), "reason": row[1]}
     try:
-        return alert_check.check(conn, cfg, story_id)
+        return alert_check.check(conn, cfg, story_id, update)
     except (ai.BudgetExceeded, ai.AIError):
         return None
 
@@ -110,17 +104,20 @@ def send_immediate(conn, cfg):
         tier = route(importance, label, cfg)
         if tier not in ("alert", "silent"):
             continue
-        note = ""
+        note, original = "", None
         if tier == "alert":
-            headline = conn.execute(
-                "SELECT headline FROM story_triage WHERE story_id = ? AND purpose = 'live'", (story_id,)
-            ).fetchone()[0]
-            if recently_alerted_on_same_saga(conn, headline):
-                tier, note = "silent", "Related to an alert you already got today, so sent quietly."
+            # A saga you already got a 🚨 about: this is an update, at most a few per saga per day
+            # (Nicholas, Nov 13), and it replies to that first alert.
+            original = threads.first_alert(conn, recipient(), story_id)
+            per_day = cfg.get("threads", {}).get("update_alerts_per_day", 1)
+            if original and threads.update_alerts_on(conn, recipient(), original["id"],
+                                                     local_now(cfg).date().isoformat()) >= per_day:
+                tier, note = "silent", "An update to a story you already got a 🚨 about; today's update alert for it was used."
             elif alerts_sent_today(conn, cfg) >= cap:
                 tier, note = "silent", f"Alert-level story sent quietly: today's limit of {cap} alerts is reached."
             else:
-                verdict = _alert_verdict(conn, cfg, story_id)
+                update = {"headline": original["headline"], "date": original["sent_at"][:10]} if original else None
+                verdict = _alert_verdict(conn, cfg, story_id, update)
                 if verdict is None:
                     tier, note = "silent", "Sent quietly: the alert double-check couldn't run."
                 elif not verdict["send_as_alert"]:
@@ -129,11 +126,14 @@ def send_immediate(conn, cfg):
                     note = f"Why this is an alert: {verdict['reason']}"
         if tier == "silent" and not silent_messages_on(cfg):
             continue  # not alert-worthy after all: it waits for the morning digest
-        card = messages.story_card(conn, story_id)
+        card = personal_card(conn, story_id)
         card.impact_note = impact.for_story(conn, cfg, recipient(), card, kind=tier)
+        is_update = tier == "alert" and original is not None
         message = messages.Message(kind=tier, silent=tier != "alert", image="alert" if tier == "alert" else None,
-                                   cards=[card], note=note)
-        _send(conn, cfg, message, story_id=story_id, note=note or None)
+                                   cards=[card], note=note,
+                                   reply_to=original["channel_message_id"] if is_update else None)
+        _send(conn, cfg, message, story_id=story_id, note=note or None,
+              update_of=original["id"] if is_update else None)
         sent[tier] += 1
     return sent
 
@@ -152,12 +152,12 @@ def digest_since(conn, cfg):
 
 
 def _alerts(conn, days=30):
-    """Recent 🚨 alerts, newest first: (story_id, headline, message id, note)."""
+    """Recent 🚨 alerts, newest first: (story_id, headline, message id, note, sent_at, thread_id)."""
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds")
     return conn.execute(
-        "SELECT d.story_id, t.headline, d.channel_message_id, d.note FROM deliveries d JOIN story_triage t"
-        " ON t.story_id = d.story_id AND t.purpose = 'live' WHERE d.kind = 'alert' AND d.recipient = ?"
-        " AND d.sent_at >= ? ORDER BY d.sent_at DESC",
+        "SELECT d.story_id, t.headline, d.channel_message_id, d.note, d.sent_at, s.thread_id FROM deliveries d"
+        " JOIN story_triage t ON t.story_id = d.story_id AND t.purpose = 'live' JOIN stories s ON s.id = d.story_id"
+        " WHERE d.kind = 'alert' AND d.recipient = ? AND d.sent_at >= ? ORDER BY d.sent_at DESC",
         (recipient(), since),
     ).fetchall()
 
@@ -178,8 +178,11 @@ def attach_receipts_to_alerts(conn, cfg):
             continue
         r = receipts.card(conn, event_id)
         story_id = conn.execute("SELECT story_id FROM claims WHERE id = ?", (r.claim_id,)).fetchone()[0]
+        thread_id = threads.thread_of(conn, story_id)
         words = key_words(r.story_headline or r.claim)
-        alert = next((a for a in alerts if a["story_id"] == story_id or related(words, key_words(a["headline"]))), None)
+        alert = (next((a for a in alerts if a["story_id"] == story_id), None)  # its own story's alert
+                 or next((a for a in alerts if thread_id and a["thread_id"] == thread_id), None)  # its saga's
+                 or next((a for a in alerts if related(words, key_words(a["headline"]))), None))  # older stories
         if alert is None:
             continue  # nothing to add it to: the digest carries it
         conn.execute(
@@ -192,7 +195,7 @@ def attach_receipts_to_alerts(conn, cfg):
         events = [row[0] for row in conn.execute(
             "SELECT claim_event_id FROM receipt_attachments WHERE recipient = ? AND story_id = ? ORDER BY id",
             (recipient(), story_id))]
-        card = messages.story_card(conn, story_id)
+        card = personal_card(conn, story_id, before=alert["sent_at"])  # re-shows its "🔄 Update" line, if any
         card.impact_note = impact.stored_note(conn, recipient(), story_id, "alert")
         message = messages.Message(kind="alert", silent=True, image="alert", cards=[card], note=alert["note"] or "",
                                    receipts=[receipts.card(conn, e) for e in events])
@@ -221,13 +224,14 @@ def build_digest(conn, cfg):
     ).fetchall()
     confirmed, unconfirmed, picked = [], [], []
     for story_id, _ in rows:  # highest score first
-        card = messages.story_card(conn, story_id)
-        words = key_words(card.headline)
-        lead = next((c for c, w in picked if related(words, w)), None)
+        card = personal_card(conn, story_id)
+        words, thread_id = key_words(card.headline), threads.thread_of(conn, story_id)
+        lead = next((c for c, w, th in picked
+                     if (thread_id and th == thread_id) or (not (thread_id and th) and related(words, w))), None)
         if lead is not None:  # same saga as a higher-ranked story: fold it in, don't repeat it
             lead.related_ids.append(story_id)
             continue
-        picked.append((card, words))
+        picked.append((card, words, thread_id))
         (unconfirmed if card.label in UNCONFIRMED else confirmed).append(card)
     confirmed = confirmed[: cfg["digest"]["max_items"]]
     today = local_now(cfg)

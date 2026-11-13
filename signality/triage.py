@@ -15,7 +15,7 @@ import argparse
 import json
 from datetime import datetime, timedelta, timezone
 
-from . import ai, article_text, claims, db, scoring, validity
+from . import ai, article_text, claims, db, scoring, threads, validity
 from .dedup import TOO_COMMON, similarity
 from .settings import load_config
 
@@ -105,7 +105,21 @@ Leave out analysts' and commentators' predictions and anything that is only an o
 SAME EVENT
 You may be given recent stories Signality already has. If this item reports the same specific \
 event as one of them (same announcement, deal, ruling, or release; not merely the same company or \
-topic), set same_event_as to that story's id. Otherwise set it to "none"."""
+topic), set same_event_as to that story's id. Otherwise set it to "none".
+
+DEVELOPING STORIES
+You may also be given developing stories Signality is following, each with its latest headlines. \
+If this item adds to one of them (the same saga: the same people, company, deal, or event, even \
+from a new angle such as reaction, analysis, or fallout), set continues_thread to its id (e.g. \
+"Thread 12"); otherwise "none". A different story that merely mentions the same company or topic \
+is "none", and so is a story that only shares a broad trend (AI demand, the AI market, AI stocks): \
+a saga is one specific chain of events.
+whats_new: if it continues a thread, one short sentence saying what this item adds that the \
+thread's latest headlines don't already say. If it adds no new facts (analysis, reaction, a recap), \
+say so plainly, e.g. "No new facts: analysis of what the ouster means for AI chip sales." Empty \
+when continues_thread is "none".
+When the item continues a thread, rate novelty against what that thread already reported: a recap, \
+reaction, or analysis of known facts is 1-2; a genuinely new development is 3 or more."""
 
 
 def schema(cfg):
@@ -119,6 +133,8 @@ def schema(cfg):
         "type": "object",
         "properties": {
             "same_event_as": {"type": "string"},
+            "continues_thread": {"type": "string"},
+            "whats_new": {"type": "string"},
             "headline": {"type": "string"},
             "summary": {"type": "string"},
             "why_it_matters": {"type": "string"},
@@ -153,7 +169,7 @@ def schema(cfg):
                 },
             },
         },
-        "required": ["same_event_as", "headline", "summary", "why_it_matters", "topics",
+        "required": ["same_event_as", "continues_thread", "whats_new", "headline", "summary", "why_it_matters", "topics",
                      "content_type", "sourcing", "attributed_to", "self_reported", "ai_related",
                      *scoring.FACTORS, "claims"],
         "additionalProperties": False,
@@ -196,7 +212,7 @@ def candidates(conn, story_id, words, cfg):
     return [(sid, title, source) for sid, (_, title, source) in best]
 
 
-def build_prompt(article, text, text_source, nearby, known_claims=()):
+def build_prompt(article, text, text_source, nearby, known_claims=(), open_threads=()):
     lines = [
         f"Today's date: {datetime.now(timezone.utc):%Y-%m-%d}",
         f"Source: {article['source_name']} (type: {article['source_type']})",
@@ -212,6 +228,7 @@ def build_prompt(article, text, text_source, nearby, known_claims=()):
     lines += [f"  {sid}: {title} ({source})" for sid, title, source in nearby] or ["  none"]
     lines += ["", "Claims Signality already tracks on this subject (use same_as if one repeats):"]
     lines += [f"  Claim {c['id']}: {c['text']}" for c in known_claims] or ["  none"]
+    lines += ["", *threads.prompt_lines(open_threads)]
     return "\n".join(lines)
 
 
@@ -244,9 +261,13 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
 
     nearby = candidates(conn, story_id, set(article["title_words"].split()), cfg) if purpose == "live" else []
     known = claims.related_claims(conn, f"{article['title']} {text or ''}"[:2000]) if purpose == "live" else []
+    current_thread = threads.thread_of(conn, story_id)
+    open_threads = (threads.candidates(conn, cfg, article["title"], exclude_story=story_id)
+                    if purpose == "live" and threads.enabled(cfg) and current_thread is None else [])
     data, cost = ai.ask_json(
         conn, cfg, task="triage" if purpose == "live" else f"triage_{purpose}", role=role, story_id=story_id,
-        system=SYSTEM, prompt=build_prompt(article, text, text_source, nearby, known), schema=schema(cfg),
+        system=SYSTEM, prompt=build_prompt(article, text, text_source, nearby, known, open_threads),
+        schema=schema(cfg),
     )
 
     same = data["same_event_as"].strip()
@@ -271,6 +292,13 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
         **{f"{f}_reason": data[f]["reason"] for f in scoring.FACTORS},
         "base_score": round(base, 1), "topic_multiplier": mult, "importance": final, "cost_usd": cost,
     }
+    thread_id = threads.picked(data["continues_thread"], open_threads)
+    if purpose == "live" and current_thread is None:
+        row["whats_new"] = (data["whats_new"].strip() or None) if thread_id else None
+    elif purpose == "live":  # re-triage keeps the story's thread and its "what's new" line
+        kept = conn.execute("SELECT whats_new FROM story_triage WHERE story_id = ? AND purpose = 'live'",
+                            (story_id,)).fetchone()
+        row["whats_new"] = kept[0] if kept else None
     cols = ", ".join(row)
     conn.execute(
         f"INSERT OR REPLACE INTO story_triage ({cols}) VALUES ({', '.join('?' * len(row))})",
@@ -279,6 +307,8 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
     if purpose == "live":
         conn.execute("UPDATE stories SET status = 'triaged' WHERE id = ?", (story_id,))
     conn.commit()
+    if purpose == "live" and current_thread is None and data["ai_related"] and threads.enabled(cfg):
+        row["thread_id"] = threads.assign(conn, story_id, thread_id, data["headline"])
     if purpose == "live":
         label = validity.update(conn, story_id)
         row["validity"], row["validity_reason"] = label["label"], label["reason"]

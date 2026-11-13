@@ -142,6 +142,19 @@ the claim, Sonnet makes the final call after reading the page itself. The claim'
 pages from before the claim was made, and aggregators never count, and the 🧾 receipt links
 the page that settled it.
 
+### Developing stories
+
+One saga can produce dozens of different stories in a day (the November 2026 Nvidia CEO affair produced
+70+). They aren't the same event, so they aren't merged, but they belong together. Signality links them
+into a **developing story**: when Claude Haiku triages a new story, it is shown the few active developing
+stories whose headlines share words with it and picks the one it continues (no extra AI call). It also
+writes one line on **what's new** and rates novelty against what the saga already reported, so a recap or
+reaction piece scores lower than a real development.
+
+- In the digest, a saga appears once, with "🔄 Update: what's new" if you've already heard about it.
+- A big development (65+, and Sonnet agrees it's genuinely new) can alert you, as a **reply to your first
+  🚨** on that saga, so the whole story stays in one place. At most one update alert per saga per day.
+
 ## What arrives on your phone
 
 | | When | Looks like |
@@ -150,6 +163,7 @@ the page that settled it.
 | 🔔 **Silent** | Importance 50–64 (optional; off by default, so these lead the digest) | Text message, no sound |
 | 📰 **Digest** | Importance 25–64, alert-level stories Sonnet declined, plus anything unconfirmed | One message each morning at 8am |
 | — | Below 25 | Stored and searchable, never sent |
+| 🔄 **Update** | A saga you already got a 🚨 about has a real new development (65+, Sonnet agrees), max 1 per saga per day | A 🚨 that replies to your first alert, with a "🔄 Update" line; smaller updates go in the digest |
 | 🧾 **Receipt** | A tracked claim resolves | Never its own message: listed in the next digest, and added to the original 🚨 alert by editing it (no new notification) |
 
 Every story shows its validity label **and the reason**, a self-reported flag where it applies,
@@ -247,7 +261,8 @@ Python · SQLite · Telegram Bot API · Claude (Haiku for bulk work, Sonnet for 
 
 Stages 1, 2a, 2b complete and live ✅ (fetching, scoring, alerts, digest, claim tracking with receipts,
 bias audit). Stage 2c built: two-way chat, the onboarding interview and profile commands, and personal impact notes.
-Stage 3 in progress: corroboration search on single-source stories and open claims built.
+Stage 3 in progress: corroboration search on single-source stories and open claims, receipts added to
+the original alert, and developing-story updates built.
 See [PROGRESS.md](PROGRESS.md).
 
 | Stage | Scope |

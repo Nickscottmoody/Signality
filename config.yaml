@@ -45,6 +45,14 @@ triage:
   fetch_full_text: true       # read the full article page when it's free to read (better summaries)
   dedup_candidates: 8         # how many similar recent headlines Haiku checks for "same event"
 
+# --- Developing stories: following one saga (e.g. the Nvidia CEO affair) across many articles ---
+threads:
+  enabled: true               # ON: each new story is matched to a developing story it continues (no extra AI call)
+  active_days: 7              # a developing story stays open this many days after its latest article
+  candidates: 3               # most developing stories Haiku is shown for each new story
+  min_shared_words: 2         # distinctive headline words a story must share with a developing story to be shown it
+  update_alerts_per_day: 1    # most 🚨 updates one developing story can send per day, after its first alert (Nicholas, Nov 13)
+
 # --- Claims: matching new evidence to open claims (the receipts system) ---
 claims:
   resolve_enabled: true       # check new articles against open claims every round
