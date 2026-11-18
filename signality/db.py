@@ -372,6 +372,12 @@ MIGRATIONS = [
     ALTER TABLE story_triage ADD COLUMN whats_new TEXT;      -- one line: what this story adds to its thread
     ALTER TABLE deliveries ADD COLUMN update_of INTEGER REFERENCES deliveries(id);  -- an update alert: the original 🚨
     """,
+    # 18 - Major tech & cyber events (Nicholas, Nov 17): big cyberattacks, breaches and outages are in scope
+    #      even with no AI angle. story_triage.ai_related now means "in scope" (AI OR a major tech event);
+    #      tech_event records which stories got in as a major tech/cyber event.
+    """
+    ALTER TABLE story_triage ADD COLUMN tech_event INTEGER NOT NULL DEFAULT 0;
+    """,
 ]
 
 

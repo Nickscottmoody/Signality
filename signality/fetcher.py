@@ -148,7 +148,7 @@ def run_once(cfg=None):
     now = datetime.now(timezone.utc)
     now_text = now.isoformat(timespec="seconds")
     oldest_allowed = now - timedelta(days=cfg["polling"]["max_article_age_days"])
-    is_ai = ai_pattern(cfg["ai_filter_keywords"])
+    is_ai = ai_pattern(cfg["ai_filter_keywords"] + cfg.get("tech_event_keywords", []))  # AI, or a tech/cyber event
     recent = recent_titles(conn, cfg["dedup"]["window_hours"])
 
     stats = dict(sources_ok=0, sources_failed=0, items_seen=0, too_old=0,

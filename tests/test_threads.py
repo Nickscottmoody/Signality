@@ -86,7 +86,7 @@ def test_triage_puts_story_in_its_thread_with_whats_new(monkeypatch):
     answer = {"same_event_as": "none", "continues_thread": "Thread 1",
               "whats_new": "The board removed Huang as CEO.", "headline": "Nvidia board ousts Jensen Huang",
               "summary": "s", "why_it_matters": "w", "topics": [], "content_type": "news",
-              "sourcing": "on_record_reporting", "attributed_to": "", "self_reported": False, "ai_related": True,
+              "sourcing": "on_record_reporting", "attributed_to": "", "self_reported": False, "ai_related": True, "major_tech_event": False,
               "impact": factor, "breadth": factor, "urgency": factor, "novelty": factor, "claims": []}
     monkeypatch.setattr(triage.ai, "ask_json", lambda *a, **k: prompts.append(k["prompt"]) or (answer, 0.001))
     triage.triage_story(conn, CFG, 11)

@@ -114,6 +114,7 @@ topics:
   tools: 1.0                  # new AI products and developer tools
   jobs: 1.1                   # AI's effect on jobs and careers (favored: small boost, chosen in step 5)
   finance_analytics: 1.1      # finance, data and analytics work (favored: small boost, chosen in step 5)
+  cyber: 1.1                  # cyberattacks, breaches, ransomware, major tech outages (favored: Nicholas, Nov 17)
 
 # --- Which Claude model does which job (swap these strings to change models) ---
 models:
@@ -205,6 +206,32 @@ ai_filter_keywords:
   - data center
   - neural
 
+# Major tech & cyber events (Nicholas, Nov 17): these words also let a story from a broad feed through,
+# even with no AI words. Haiku then decides if it's big enough (many companies, banks, or critical
+# services hit); small incidents are stored only. Matched as whole words, like the AI list.
+tech_event_keywords:
+  - cyberattack               # one word, two words, or hyphenated: all three spellings are listed
+  - cyberattacks
+  - cyber attack
+  - cyber attacks
+  - cyber-attack
+  - cyber-attacks
+  - cybersecurity
+  - hack                      # whole word: "hackathon" doesn't count
+  - hacked
+  - hacker
+  - hackers
+  - hacking
+  - breach                    # data breaches (also catches "breach of contract"; Haiku sorts those out)
+  - data breach
+  - ransomware
+  - malware
+  - spyware
+  - DDoS                      # floods a website with traffic to knock it offline
+  - zero-day                  # a security hole attackers use before a fix exists
+  - outage                    # service outages (Outlook, cloud, banking apps, phone networks)
+  - outages
+
 # --- News sources (RSS feeds) ---
 # type:       primary = the organization the news is about (earns ✅ Confirmed)
 #             news = professional newsroom; specialist = AI-focused outlet
@@ -212,7 +239,8 @@ ai_filter_keywords:
 #             From AllSides Media Bias Ratings, checked 2026-11-09. n/a = the organization itself,
 #             not a news outlet. unrated = AllSides has no rating.
 # paywalled:  true = we only get headline + preview, so summaries are marked "partial"
-# ai_filter:  true = feed covers more than AI, so apply ai_filter_keywords first
+# ai_filter:  true = feed covers more than AI, so only stories matching ai_filter_keywords
+#             or tech_event_keywords get in
 # via:        google_news = outlet has no public feed; we use a Google News search
 #             limited to its site, and must follow Google's link to the real article
 sources:

@@ -46,10 +46,14 @@ now, deadline imminent).
 - novelty: how new or surprising it is.
   1 rehash, incremental, or widely expected | 3 a new development in an ongoing story | \
 5 first of its kind or genuinely surprising.
+- A widespread cyberattack or outage hitting banks, payments, email, cloud, or other critical services \
+used by many companies or people rates high on breadth (4-5) and, while it is ongoing or just \
+happened, on urgency (4-5).
 
 TOPICS (choose all that clearly apply; use "other" only if none fit)
 model_releases, research, companies_funding, policy, tools, jobs (AI's effect on work, hiring, \
-careers, skills), finance_analytics (AI in finance, markets, investing, accounting, data analytics), other.
+careers, skills), finance_analytics (AI in finance, markets, investing, accounting, data analytics), cyber \
+(cyberattacks, data breaches, ransomware, hacking, major tech outages), other.
 
 CONTENT TYPE
 news | opinion (argues a position) | analysis (explains or interprets) | press_release (an \
@@ -74,6 +78,15 @@ ai_related: true when AI is a central or significant part of the story, includin
 markets, investment, companies, jobs, or policy (for example, AI stocks moving, funds raised for AI \
 companies). false only when AI is mentioned in passing or not at all (for example, general election \
 or market news that names AI once). Still fill in every other field.
+
+MAJOR TECH EVENT
+major_tech_event: true for a major cyberattack, data breach, ransomware attack, or tech outage that \
+hits many companies or people, or critical services (banks, payments, email, cloud, phone networks, \
+hospitals, government systems), even if AI is not involved. Official responses to such events \
+(investigations, government statements on who was behind them) count too. false for small incidents \
+(one small company, a short glitch, a minor vulnerability notice) and for stories with no cyber or \
+outage event. A disruption limited to one airline, airport, or flight system is false unless a \
+cyberattack or a widespread tech failure caused it. Tag major tech events with the cyber topic.
 
 CLAIMS
 List up to 4 of the story's most important checkable factual claims, as separate items. Return an \
@@ -148,6 +161,7 @@ def schema(cfg):
             "attributed_to": {"type": "string"},
             "self_reported": {"type": "boolean"},
             "ai_related": {"type": "boolean"},
+            "major_tech_event": {"type": "boolean"},
             **{f: factor for f in scoring.FACTORS},
             "claims": {
                 "type": "array",
@@ -170,7 +184,7 @@ def schema(cfg):
             },
         },
         "required": ["same_event_as", "continues_thread", "whats_new", "headline", "summary", "why_it_matters", "topics",
-                     "content_type", "sourcing", "attributed_to", "self_reported", "ai_related",
+                     "content_type", "sourcing", "attributed_to", "self_reported", "ai_related", "major_tech_event",
                      *scoring.FACTORS, "claims"],
         "additionalProperties": False,
     }
@@ -279,7 +293,8 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
     ratings = {f: data[f]["score"] for f in scoring.FACTORS}
     topics = [t for t in data["topics"] if t in cfg["topics"] or t == "other"]
     base, mult, final = scoring.importance(ratings, topics, cfg)
-    if not data["ai_related"]:
+    in_scope = data["ai_related"] or data["major_tech_event"]  # AI, or a major tech/cyber event
+    if not in_scope:
         final = 0  # not AI news: store it, never send it
     row = {
         "story_id": story_id, "article_id": article["id"], "purpose": purpose,
@@ -287,7 +302,8 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
         "headline": data["headline"], "summary": data["summary"], "why_it_matters": data["why_it_matters"],
         "topics": json.dumps(topics), "content_type": data["content_type"], "sourcing": data["sourcing"],
         "attributed_to": data["attributed_to"] or None, "self_reported": int(data["self_reported"]),
-        "ai_related": int(data["ai_related"]),
+        "ai_related": int(in_scope),  # the column means "in scope" (sent if important enough)
+        "tech_event": int(data["major_tech_event"]),
         **{f: data[f]["score"] for f in scoring.FACTORS},
         **{f"{f}_reason": data[f]["reason"] for f in scoring.FACTORS},
         "base_score": round(base, 1), "topic_multiplier": mult, "importance": final, "cost_usd": cost,
@@ -307,13 +323,13 @@ def triage_story(conn, cfg, story_id, role="bulk", purpose="live"):
     if purpose == "live":
         conn.execute("UPDATE stories SET status = 'triaged' WHERE id = ?", (story_id,))
     conn.commit()
-    if purpose == "live" and current_thread is None and data["ai_related"] and threads.enabled(cfg):
+    if purpose == "live" and current_thread is None and in_scope and threads.enabled(cfg):
         row["thread_id"] = threads.assign(conn, story_id, thread_id, data["headline"])
     if purpose == "live":
         label = validity.update(conn, story_id)
         row["validity"], row["validity_reason"] = label["label"], label["reason"]
         already = conn.execute("SELECT 1 FROM claims WHERE story_id = ? LIMIT 1", (story_id,)).fetchone()
-        worth_tracking = data["ai_related"] and data["content_type"] != "opinion"
+        worth_tracking = in_scope and data["content_type"] != "opinion"
         row["claims"] = [] if already or not worth_tracking else claims.record(
             conn, story_id, article["id"], data["claims"][:4], label["independent_outlets"],
             article["source_name"], known_ids=[c["id"] for c in known])
