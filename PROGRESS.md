@@ -14,6 +14,13 @@ its saga got a 🚨 at 6:59 CT). Nicholas then chose: receipts are never their o
 Chinese spy" → 🔴 disputed: China called it a smear, AP/PBS say only "alleged"); 30/30 story searches; 2
 alerts today (Anthropic $1.4T IPO 87, Gemini 4 Carbon 70). Step 3 (developing stories) is next.
 
+**Nicholas (Nov 17): major cyberattacks and tech outages are "highly, highly important" and must be caught**
+(e.g. the Nov 12-17 wave: Microsoft Outlook/Office/Copilot outage, attacks on banks and ~178 companies), even
+when no AI is involved. Diagnosis (Nov 17): the AI keyword filter on broad feeds (WSJ, Bloomberg, The
+Information, Washington Examiner, Reason, Federal Register) discards them before scoring; Reuters/AP Google
+News queries only fetch AI headlines; no cybersecurity source exists. The Outlook outage itself (AI-linked via
+Copilot) scored 61 → Nov 13 digest, below the 65 alert cutoff. Plan + his choice: see Open issues.
+
 **Working rules we settled on**
 - Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
 - **Nicholas runs** `./scripts/install_mac_service.sh` (restart) and anything that publishes (Claude's
