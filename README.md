@@ -79,8 +79,9 @@ is only the starting point: Signality grades every source by how its claims hold
 | **Viewpoint balance** (policy) | Reason · Washington Examiner |
 
 Paywalled sources contribute their headline and preview, and those summaries are marked
-*partial*. Broad feeds pass through a free keyword filter so only AI stories reach the
-paid AI steps.
+*partial*. Broad feeds pass through a free keyword filter so only AI stories, plus major tech and
+cyber events (cyberattacks, breaches, ransomware, big outages), reach the paid AI steps. Haiku keeps a
+non-AI event only if it hits many companies or people, or critical services like banks, email, or the cloud.
 
 ## Bias safeguards
 

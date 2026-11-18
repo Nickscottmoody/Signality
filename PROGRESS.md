@@ -22,6 +22,19 @@ News queries only fetch AI headlines; no cybersecurity source exists. The Outloo
 Copilot) scored 61 → Nov 13 digest, below the 65 alert cutoff. **Approved plan ("Yes, all four"): see Open
 issues → "Catch major cyber/outage news". Build it next in Stage 3, before the 👍/👎 buttons.**
 
+**Cyber/outage plan, step A+D — done (code), waiting for restart (Nov 17).** `tech_event_keywords` in
+config.yaml (cyberattack, hack, breach, ransomware, malware, DDoS, zero-day, outage…) let broad-feed stories
+through the filter with no AI words. Triage has a new `major_tech_event` field: in scope = AI OR a major
+tech/cyber event (many companies/people, or banks, payments, email, cloud, phone networks, hospitals,
+government); single-airline/flight disruptions only if a cyberattack or widespread failure caused them.
+`story_triage.ai_related` now means "in scope"; migration 18 adds `tech_event`. New topic `cyber` x1.1;
+rating guidance: widespread attacks/outages on critical services -> breadth and urgency 4-5. Live check on
+today's feeds (stored nothing): 6 extra stories got through; Haiku scored "Outages sweep across every
+industry" 84, Rubio "outages unrelated, not hostile acts" 67, "Tech paranoia" 56, FAA/Duffy 46,
+Apple+Marriott 29, Reason "The Chinese Connection" out of scope. Measured $0.0004/story (6 in the feeds'
+7-day window -> well under $0.10/month). 126 tests. Next: C (coverage surge), then B (cyber sources:
+propose to Nicholas).
+
 **Working rules we settled on**
 - Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
 - **Nicholas runs** `./scripts/install_mac_service.sh` (restart) and anything that publishes (Claude's
