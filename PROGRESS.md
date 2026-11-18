@@ -19,7 +19,8 @@ alerts today (Anthropic $1.4T IPO 87, Gemini 4 Carbon 70). Step 3 (developing st
 when no AI is involved. Diagnosis (Nov 17): the AI keyword filter on broad feeds (WSJ, Bloomberg, The
 Information, Washington Examiner, Reason, Federal Register) discards them before scoring; Reuters/AP Google
 News queries only fetch AI headlines; no cybersecurity source exists. The Outlook outage itself (AI-linked via
-Copilot) scored 61 → Nov 13 digest, below the 65 alert cutoff. Plan + his choice: see Open issues.
+Copilot) scored 61 → Nov 13 digest, below the 65 alert cutoff. **Approved plan ("Yes, all four"): see Open
+issues → "Catch major cyber/outage news". Build it next in Stage 3, before the 👍/👎 buttons.**
 
 **Working rules we settled on**
 - Teach per CLAUDE.md: one step at a time, plain language, 🛑 YOUR TURN blocks for anything only Nicholas can do.
@@ -450,6 +451,19 @@ Next: check the Nov 14 8am digest's "🔄 Update" lines and the first update ale
 - [ ] Confirm first real digest (Nov 10 8am) + first full day's cost
 
 ## Open issues
+- **Catch major cyber/outage news (APPROVED by Nicholas Nov 17, "Yes, all four"; build next):**
+  A. "Major tech & cyber events" lane: a second keyword list (cyberattack, breach, ransomware, hack, major
+     outage) lets these pass the broad-feed `ai_filter` without AI words; Haiku triage decides in-scope = AI
+     OR a major tech/cyber event hitting many companies, banks, or critical services (minor = stored only);
+     new cyber topic tag.
+  B. 2-3 credible cyber sources, freshness/signal-tested first, proposed to Nicholas with a (Recommended)
+     pick: e.g. CISA (primary), a Reuters/AP Google News cyber query, one specialist (The Record or
+     BleepingComputer). Log lean per bias rules.
+  C. "Coverage surge": many INDEPENDENT outlets (echoes count once) on one story/saga within a few hours →
+     Sonnet alert check even under the cutoff; outlet count + window in config; cap and saga rules still apply.
+  D. Cyber topic bonus ×1.1 + triage guidance: widespread attacks/outages on banks, email, critical services
+     rate high on Breadth and Urgency.
+  Estimated +5-10 triaged stories/day ≈ $0.10-0.30/month: measure and report the real number.
 - **Python HTTPS certificates:** this Mac's Python 3.12 cannot verify certificates on its own, so
   feeds must be fetched with `requests` (which carries its own certificate bundle), not
   `feedparser.parse(url)` directly. Already accounted for.
